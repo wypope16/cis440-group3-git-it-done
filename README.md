@@ -1,2 +1,2 @@
-# cis440-group3-git-it-done
-CIS 440 Group 3 team repsitory
+# ProjectTemplate
+copy this code into your own repository, and use it for your project as you see fit!
