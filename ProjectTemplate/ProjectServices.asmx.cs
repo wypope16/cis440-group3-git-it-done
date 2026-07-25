@@ -62,5 +62,76 @@ namespace ProjectTemplate
 				return "Something went wrong, please check your credentials and db name and try again.  Error: "+e.Message;
 			}
 		}
-	}
+        [WebMethod(EnableSession = true)]
+        public MoodCheckInResult SubmitMoodCheckIn(
+    string mood,
+    string workplaceFactor,
+    string causeText,
+    string recommendationText)
+        {
+            mood = (mood ?? string.Empty).Trim();
+            workplaceFactor = (workplaceFactor ?? string.Empty).Trim();
+            causeText = (causeText ?? string.Empty).Trim();
+            recommendationText = (recommendationText ?? string.Empty).Trim();
+
+            if (string.IsNullOrWhiteSpace(mood) ||
+                string.IsNullOrWhiteSpace(workplaceFactor) ||
+                string.IsNullOrWhiteSpace(causeText) ||
+                string.IsNullOrWhiteSpace(recommendationText))
+            {
+                return new MoodCheckInResult
+                {
+                    Success = false,
+                    Message = "Please complete every required field."
+                };
+            }
+
+            const string query = @"
+        INSERT INTO mood_checkins
+            (mood, workplace_factor, cause_text, recommendation_text)
+        VALUES
+            (@mood, @workplaceFactor, @causeText, @recommendationText);";
+
+            try
+            {
+                using (MySqlConnection con = new MySqlConnection(getConString()))
+                using (MySqlCommand cmd = new MySqlCommand(query, con))
+                {
+                    cmd.Parameters.Add("@mood", MySqlDbType.VarChar, 20).Value = mood;
+                    cmd.Parameters.Add("@workplaceFactor", MySqlDbType.VarChar, 50).Value =
+                        workplaceFactor;
+                    cmd.Parameters.Add("@causeText", MySqlDbType.Text).Value = causeText;
+                    cmd.Parameters.Add("@recommendationText", MySqlDbType.Text).Value =
+                        recommendationText;
+
+                    con.Open();
+
+                    int rowsAffected = cmd.ExecuteNonQuery();
+
+                    if (rowsAffected == 1)
+                    {
+                        return new MoodCheckInResult
+                        {
+                            Success = true,
+                            Message = "Your anonymous check-in was recorded."
+                        };
+                    }
+
+                    return new MoodCheckInResult
+                    {
+                        Success = false,
+                        Message = "The check-in could not be recorded. Please try again."
+                    };
+                }
+            }
+            catch (Exception)
+            {
+                return new MoodCheckInResult
+                {
+                    Success = false,
+                    Message = "The check-in could not be recorded. Please try again."
+                };
+            }
+        }
+    }
 }
