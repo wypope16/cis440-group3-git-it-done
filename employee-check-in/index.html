@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Check-in</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 400px; }
+    textarea { width: 100%; height: 100px; margin-bottom: 10px; padding: 8px; }
+    button { padding: 10px 15px; background-color: #0056b3; color: white; border: none; cursor: pointer; }
+    button:disabled { background-color: #cccccc; cursor: not-allowed; }
+
+    /* styling for the status box below the form */
+    #statusMessage { margin-top: 15px; padding: 10px; border-radius: 4px; display: none; outline: none; }
+    #statusMessage.success { display: block; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    #statusMessage.error { display: block; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+  </style>
+</head>
+<body>
+  
+  <h2>Weekly Check-in</h2>
+
+  <!-- check in form, this is temp and can be changed once form itself is done -->
+  <form id="checkInForm">
+    <label for="feedback">Your Feedback:</label><br>
+    <textarea id="feedback" placeholder="How was your week?" required></textarea><br>
+    <button type="submit" id="submitBtn">Submit Check-in</button>
+  </form>
+
+  <!-- screen reader updates -->
+  <div id="statusMessage" role="alert" aria-live="polite" tabindex="-1"></div>
+
+  <script>
+      const form = document.getElementById('checkInForm');
+      const submitBtn = document.getElementById('submitBtn');
+      const statusMessage = document.getElementById('statusMessage');
+      const feedbackInput = document.getElementById('feedback');
+
+      form.addEventListener('submit', async function(event) {
+      event.preventDefault();
+
+       // disabling the button for now so people can't double-submit, can change later
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+
+      // clear out whatever was showing before
+      statusMessage.className = '';
+      statusMessage.textContent = '';
+
+      try {
+        // send request to node.js backend
+        const response = await fetch('/api/checkin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ feedback: feedbackInput.value })
+        });
+
+        const data = await response.json();
+        
+if (response.ok && data.success) {
+          // just a simple success msg for now, not showing any database id or anything
+          statusMessage.textContent = 'Success! Your feedback was successfully recorded.';
+          statusMessage.className = 'success';
+
+          // only clearing the form once we know it actually went through
+          form.reset();
+        } else {
+          throw new Error('Server returned an error');
+        }
+      } catch (error) {
+        // keeping whatever employee typed so they don't lose it, just show a retry message
+        statusMessage.textContent = 'Oops! Could not submit feedback right now. Please try again.';
+        statusMessage.className = 'error';
+      } finally {
+        // re-enable button either way
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Check-in';
+
+        // moving focus here so screen readers actually catch this, temp fix until form's finalized
+        statusMessage.focus();
+      }
+    });
+  </script>
+</body>
+</html>
