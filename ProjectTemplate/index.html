@@ -1,13 +1,15 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
 	<meta charset="utf-8" />
 	<title></title>
+
 	<!--DO NOT FORGET THIS SCRIPT TAG SO YOU CAN USE JQUERY!!!!!-->
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
 	<!--YOUR OWN JAVASCRIPT CAN GO RIGHT HERE-->
 	<script type="text/javascript">
+
 		function TestButtonHandler() {
 			var webMethod = "ProjectServices.asmx/TestConnection";
 			var parameters = "{}";
@@ -28,6 +30,19 @@
 				}
 			});
 		}
+
+		function validateFactor() {
+			let selectedFactor = document.querySelector('input[name="factor"]:checked');
+
+			if (!selectedFactor) {
+				document.getElementById("factorError").style.display = "block";
+				return false;
+			}
+
+			document.getElementById("factorError").style.display = "none";
+			return true;
+		}
+
 	</script>
 	<!--END OF YOUR OWN JAVASCRIPT-->
 
@@ -36,8 +51,30 @@
 
 	</style>
 	<!--END OF YOUR OWN CSS-->
-</head >
+
+</head>
+
 <body>
-	<button onclick="javascript: TestButtonHandler();">Click here to test connection!</button>
+
+	<button onclick="if(validateFactor()) TestButtonHandler();">
+		Click here to test connection!
+	</button>
+
+	<hr>
+
+	<h3>Select Workplace Factor</h3>
+
+	<input type="radio" name="factor" value="Workload"> Workload<br>
+	<input type="radio" name="factor" value="Management"> Management<br>
+	<input type="radio" name="factor" value="Scheduling"> Scheduling<br>
+	<input type="radio" name="factor" value="Technology"> Technology<br>
+	<input type="radio" name="factor" value="Communication"> Communication<br>
+	<input type="radio" name="factor" value="Team Relationships"> Team Relationships<br>
+	<input type="radio" name="factor" value="Workplace Environment"> Workplace Environment<br>
+
+	<p id="factorError" style="color:red; display:none;">
+		Please select a workplace factor.
+	</p>
+
 </body>
-</html >
+</html>
