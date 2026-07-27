@@ -43,6 +43,31 @@
 			return true;
 		}
 
+        function validateCause() {
+            let causeField = document.getElementById("causeText");
+            let causeError = document.getElementById("causeError");
+            let cause = causeField.value.trim();
+
+            if (cause === "") {
+                causeError.style.display = "block";
+                causeField.setAttribute("aria-invalid", "true");
+                return false;
+            }
+
+            causeError.style.display = "none";
+            causeField.setAttribute("aria-invalid", "false");
+            return true;
+        }
+
+        function clearCauseError() {
+            let causeField = document.getElementById("causeText");
+
+            if (causeField.value.trim() !== "") {
+                document.getElementById("causeError").style.display = "none";
+                causeField.setAttribute("aria-invalid", "false");
+            }
+        }
+
         function validateRecommendation() {
             let recommendationField = document.getElementById("recommendationText");
             let recommendationError = document.getElementById("recommendationError");
@@ -99,6 +124,31 @@
 
 	<p id="factorError" style="color:red; display:none;">
 		Please select a workplace factor.
+	</p>
+	<hr>
+
+	<h3>Mood Explanation</h3>
+
+	<label for="causeText">
+		What caused your selected mood?
+	</label>
+	<br>
+
+<textarea id="causeText"
+		  name="causeText"
+		  rows="5"
+		  cols="50"
+		  required
+		  aria-required="true"
+		  aria-invalid="false"
+		  aria-describedby="causeError"
+		  onblur="validateCause();"
+		  oninput="clearCauseError();"></textarea>
+
+	<p id="causeError"
+	   role="alert"
+	   style="color:red; display:none;">
+		Please explain what caused your selected mood.
 	</p>
 	<hr>
 
