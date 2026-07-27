@@ -121,12 +121,18 @@ function validateMood() {
         }
 
         return false;
-    }
+	}
 
     moodError.style.display = "none";
     moodSelector.setAttribute("aria-invalid", "false");
     return true;
-}
+		}
+        function validateSelections() {
+            const moodIsValid = validateMood();
+            const factorIsValid = validateFactor();
+
+            return moodIsValid && factorIsValid;
+        }
 
 document.addEventListener("DOMContentLoaded", function () {
     const moodInputs = document.querySelectorAll(
@@ -217,7 +223,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 <body>
 
-	<button onclick="if (validateMood() && validateFactor()) TestButtonHandler();">
+	<button onclick="if (validateSelections()) TestButtonHandler();">
 		Click here to test connection!
 	</button>
 
