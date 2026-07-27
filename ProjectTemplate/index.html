@@ -10,26 +10,48 @@
 	<!--YOUR OWN JAVASCRIPT CAN GO RIGHT HERE-->
 	<script type="text/javascript">
 
-		function TestButtonHandler() {
-			var webMethod = "ProjectServices.asmx/TestConnection";
-			var parameters = "{}";
+        function SubmitMoodCheckIn(event) {
+            event.preventDefault();
 
-			//jQuery ajax method
-			$.ajax({
-				type: "POST",
-				url: webMethod,
-				data: parameters,
-				contentType: "application/json; charset=utf-8",
-				dataType: "json",
-				success: function (msg) {
-					var responseFromServer = msg.d;
-					alert(responseFromServer);
-				},
-				error: function (e) {
-					alert("this code will only execute if javascript is unable to access the webservice");
-				}
-			});
-		}
+            if (!validateCheckIn()) {
+                return;
+            }
+
+            const selectedFactor = document.querySelector(
+                'input[name="factor"]:checked'
+            );
+
+            const parameters = JSON.stringify({
+                mood: getSelectedMood(),
+                workplaceFactor: selectedFactor.value,
+                causeText: document.getElementById("causeText").value.trim(),
+                recommendationText: document
+                    .getElementById("recommendationText")
+                    .value
+                    .trim()
+            });
+
+            $.ajax({
+                type: "POST",
+                url: "ProjectServices.asmx/SubmitMoodCheckIn",
+                data: parameters,
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+
+                success: function (msg) {
+                    const result = msg.d;
+
+                    console.log("Submission success:", result.Success);
+                    console.log("Server message:", result.Message);
+                },
+
+                error: function () {
+                    console.log(
+                        "The submission request could not reach the service."
+                    );
+                }
+            });
+        }
 
 		function validateFactor() {
 			let selectedFactor = document.querySelector('input[name="factor"]:checked');
@@ -127,11 +149,16 @@ function validateMood() {
     moodSelector.setAttribute("aria-invalid", "false");
     return true;
 		}
-        function validateSelections() {
+        function validateCheckIn() {
             const moodIsValid = validateMood();
             const factorIsValid = validateFactor();
+            const causeIsValid = validateCause();
+            const recommendationIsValid = validateRecommendation();
 
-            return moodIsValid && factorIsValid;
+            return moodIsValid &&
+                factorIsValid &&
+                causeIsValid &&
+                recommendationIsValid;
         }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -223,117 +250,124 @@ document.addEventListener("DOMContentLoaded", function () {
 
 <body>
 
-	<button onclick="if (validateSelections()) TestButtonHandler();">
-		Click here to test connection!
-	</button>
 
-	<hr>
-	<!-- US-02: Current mood selection -->
-	<fieldset class="mood-selector"
-			  aria-describedby="moodError"
-			  aria-invalid="false">
-		<legend>Select Your Current Mood</legend>
 
-		<div class="mood-options">
-			<label class="mood-option">
-				<input type="radio" name="mood" value="Good">
-				<span>Good</span>
-			</label>
+    <hr>
+    <form id="checkInForm"
+          onsubmit="SubmitMoodCheckIn(event);"
+          novalidate>
+        <!-- US-02: Current mood selection -->
+        <fieldset class="mood-selector"
+                  aria-describedby="moodError"
+                  aria-invalid="false">
+            <legend>Select Your Current Mood</legend>
 
-			<label class="mood-option">
-				<input type="radio" name="mood" value="Okay">
-				<span>Okay</span>
-			</label>
+            <div class="mood-options">
+                <label class="mood-option">
+                    <input type="radio" name="mood" value="Good">
+                    <span>Good</span>
+                </label>
 
-			<label class="mood-option">
-				<input type="radio" name="mood" value="Stressed">
-				<span>Stressed</span>
-			</label>
+                <label class="mood-option">
+                    <input type="radio" name="mood" value="Okay">
+                    <span>Okay</span>
+                </label>
 
-			<label class="mood-option">
-				<input type="radio" name="mood" value="Frustrated">
-				<span>Frustrated</span>
-			</label>
+                <label class="mood-option">
+                    <input type="radio" name="mood" value="Stressed">
+                    <span>Stressed</span>
+                </label>
 
-			<label class="mood-option">
-				<input type="radio" name="mood" value="Overwhelmed">
-				<span>Overwhelmed</span>
-			</label>
-		</div>
+                <label class="mood-option">
+                    <input type="radio" name="mood" value="Frustrated">
+                    <span>Frustrated</span>
+                </label>
 
-		<p id="moodError"
-		   class="validation-message"
-		   role="alert"
-		   style="display:none;">
-			Please select your current mood.
-		</p>
-	</fieldset>
+                <label class="mood-option">
+                    <input type="radio" name="mood" value="Overwhelmed">
+                    <span>Overwhelmed</span>
+                </label>
+            </div>
 
-	<hr>
-	<h3>Select Workplace Factor</h3>
+            <p id="moodError"
+               class="validation-message"
+               role="alert"
+               style="display:none;">
+                Please select your current mood.
+            </p>
+        </fieldset>
 
-	<input type="radio" name="factor" value="Workload"> Workload<br>
-	<input type="radio" name="factor" value="Management"> Management<br>
-	<input type="radio" name="factor" value="Scheduling"> Scheduling<br>
-	<input type="radio" name="factor" value="Technology"> Technology<br>
-	<input type="radio" name="factor" value="Communication"> Communication<br>
-	<input type="radio" name="factor" value="Team Relationships"> Team Relationships<br>
-	<input type="radio" name="factor" value="Workplace Environment"> Workplace Environment<br>
+        <hr>
+        <h3>Select Workplace Factor</h3>
 
-	<p id="factorError" style="color:red; display:none;">
-		Please select a workplace factor.
-	</p>
-	<hr>
+        <input type="radio" name="factor" value="Workload"> Workload<br>
+        <input type="radio" name="factor" value="Management"> Management<br>
+        <input type="radio" name="factor" value="Scheduling"> Scheduling<br>
+        <input type="radio" name="factor" value="Technology"> Technology<br>
+        <input type="radio" name="factor" value="Communication"> Communication<br>
+        <input type="radio" name="factor" value="Team Relationships"> Team Relationships<br>
+        <input type="radio" name="factor" value="Workplace Environment"> Workplace Environment<br>
 
-	<h3>Mood Explanation</h3>
+        <p id="factorError" style="color:red; display:none;">
+            Please select a workplace factor.
+        </p>
+        <hr>
 
-	<label for="causeText">
-		What caused your selected mood?
-	</label>
-	<br>
+        <h3>Mood Explanation</h3>
+
+        <label for="causeText">
+            What caused your selected mood?
+        </label>
+        <br>
 
 <textarea id="causeText"
-		  name="causeText"
-		  rows="5"
-		  cols="50"
-		  required
-		  aria-required="true"
-		  aria-invalid="false"
-		  aria-describedby="causeError"
-		  onblur="validateCause();"
-		  oninput="clearCauseError();"></textarea>
+          name="causeText"
+          rows="5"
+          cols="50"
+          required
+          aria-required="true"
+          aria-invalid="false"
+          aria-describedby="causeError"
+          onblur="validateCause();"
+          oninput="clearCauseError();"></textarea>
 
-	<p id="causeError"
-	   role="alert"
-	   style="color:red; display:none;">
-		Please explain what caused your selected mood.
-	</p>
-	<hr>
+        <p id="causeError"
+           role="alert"
+           style="color:red; display:none;">
+            Please explain what caused your selected mood.
+        </p>
+        <hr>
 
-	<h3>Actionable Recommendation</h3>
+        <h3>Actionable Recommendation</h3>
 
-	<label for="recommendationText">
-		What should the company improve or continue doing?
-	</label>
-	<br>
+        <label for="recommendationText">
+            What should the company improve or continue doing?
+        </label>
+        <br>
 
 <textarea id="recommendationText"
-		  name="recommendationText"
-		  rows="5"
-		  cols="50"
-		  required
-		  aria-required="true"
-		  aria-invalid="false"
-		  aria-describedby="recommendationError"
-		  onblur="validateRecommendation();"
-		  oninput="clearRecommendationError();">
+          name="recommendationText"
+          rows="5"
+          cols="50"
+          required
+          aria-required="true"
+          aria-invalid="false"
+          aria-describedby="recommendationError"
+          onblur="validateRecommendation();"
+          oninput="clearRecommendationError();">
 </textarea>
 
-	<p id="recommendationError"
-	   role="alert"
-	   style="color:red; display:none;">
-		Please provide a recommendation.
-	</p>
+        <p id="recommendationError"
+           role="alert"
+           style="color:red; display:none;">
+            Please provide a recommendation.
+        </p>
+        <br>
 
+        <button type="submit">
+            Submit Check-In
+        </button>
+
+    </form>
 </body>
 </html>
