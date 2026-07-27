@@ -92,13 +92,124 @@
                 recommendationField.setAttribute("aria-invalid", "false");
             }
         }
+function getSelectedMood() {
+    const selectedMood = document.querySelector(
+        'input[name="mood"]:checked'
+    );
 
+    return selectedMood ? selectedMood.value : "";
+}
+
+function validateMood() {
+    const selectedMood = document.querySelector(
+        'input[name="mood"]:checked'
+    );
+
+    const moodError = document.getElementById("moodError");
+    const moodSelector = document.querySelector(".mood-selector");
+
+    if (!selectedMood) {
+        moodError.style.display = "block";
+        moodSelector.setAttribute("aria-invalid", "true");
+
+        const firstMood = document.querySelector(
+            'input[name="mood"]'
+        );
+
+        if (firstMood) {
+            firstMood.focus();
+        }
+
+        return false;
+    }
+
+    moodError.style.display = "none";
+    moodSelector.setAttribute("aria-invalid", "false");
+    return true;
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    const moodInputs = document.querySelectorAll(
+        'input[name="mood"]'
+    );
+
+    moodInputs.forEach(function (input) {
+        input.addEventListener("change", function () {
+            document.getElementById("moodError").style.display = "none";
+
+            document
+                .querySelector(".mood-selector")
+                .setAttribute("aria-invalid", "false");
+        });
+    });
+});
 	</script>
 	<!--END OF YOUR OWN JAVASCRIPT-->
 
 	<!--AND YOUR OWN CSS CAN GO HERE AS WELL-->
 	<style>
+        .mood-selector {
+            margin: 16px 0;
+            padding: 16px;
+            border: 1px solid #777;
+            border-radius: 6px;
+        }
 
+            .mood-selector legend {
+                padding: 0 6px;
+                font-size: 1.15rem;
+                font-weight: bold;
+            }
+
+        .mood-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .mood-option {
+            position: relative;
+            cursor: pointer;
+        }
+
+            .mood-option input {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                opacity: 0;
+            }
+
+            .mood-option span {
+                display: inline-block;
+                min-width: 100px;
+                padding: 10px 14px;
+                border: 2px solid #666;
+                border-radius: 6px;
+                background-color: #ffffff;
+                text-align: center;
+            }
+
+            .mood-option:hover span {
+                border-color: #111;
+                background-color: #f2f2f2;
+            }
+
+            .mood-option input:focus-visible + span {
+                outline: 3px solid #111;
+                outline-offset: 3px;
+            }
+
+            .mood-option input:checked + span {
+                border-color: #111;
+                background-color: #d9d9d9;
+                font-weight: bold;
+            }
+
+        .validation-message {
+            margin-top: 10px;
+            color: #b00020;
+            font-weight: bold;
+        }
 	</style>
 	<!--END OF YOUR OWN CSS-->
 
@@ -106,12 +217,53 @@
 
 <body>
 
-	<button onclick="if(validateFactor()) TestButtonHandler();">
+	<button onclick="if (validateMood() && validateFactor()) TestButtonHandler();">
 		Click here to test connection!
 	</button>
 
 	<hr>
+	<!-- US-02: Current mood selection -->
+	<fieldset class="mood-selector"
+			  aria-describedby="moodError"
+			  aria-invalid="false">
+		<legend>Select Your Current Mood</legend>
 
+		<div class="mood-options">
+			<label class="mood-option">
+				<input type="radio" name="mood" value="Good">
+				<span>Good</span>
+			</label>
+
+			<label class="mood-option">
+				<input type="radio" name="mood" value="Okay">
+				<span>Okay</span>
+			</label>
+
+			<label class="mood-option">
+				<input type="radio" name="mood" value="Stressed">
+				<span>Stressed</span>
+			</label>
+
+			<label class="mood-option">
+				<input type="radio" name="mood" value="Frustrated">
+				<span>Frustrated</span>
+			</label>
+
+			<label class="mood-option">
+				<input type="radio" name="mood" value="Overwhelmed">
+				<span>Overwhelmed</span>
+			</label>
+		</div>
+
+		<p id="moodError"
+		   class="validation-message"
+		   role="alert"
+		   style="display:none;">
+			Please select your current mood.
+		</p>
+	</fieldset>
+
+	<hr>
 	<h3>Select Workplace Factor</h3>
 
 	<input type="radio" name="factor" value="Workload"> Workload<br>
