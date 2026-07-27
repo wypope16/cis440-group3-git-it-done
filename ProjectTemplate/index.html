@@ -43,6 +43,31 @@
 			return true;
 		}
 
+        function validateRecommendation() {
+            let recommendationField = document.getElementById("recommendationText");
+            let recommendationError = document.getElementById("recommendationError");
+            let recommendation = recommendationField.value.trim();
+
+            if (recommendation === "") {
+                recommendationError.style.display = "block";
+                recommendationField.setAttribute("aria-invalid", "true");
+                return false;
+            }
+
+            recommendationError.style.display = "none";
+            recommendationField.setAttribute("aria-invalid", "false");
+            return true;
+        }
+
+        function clearRecommendationError() {
+            let recommendationField = document.getElementById("recommendationText");
+
+            if (recommendationField.value.trim() !== "") {
+                document.getElementById("recommendationError").style.display = "none";
+                recommendationField.setAttribute("aria-invalid", "false");
+            }
+        }
+
 	</script>
 	<!--END OF YOUR OWN JAVASCRIPT-->
 
@@ -74,6 +99,32 @@
 
 	<p id="factorError" style="color:red; display:none;">
 		Please select a workplace factor.
+	</p>
+	<hr>
+
+	<h3>Actionable Recommendation</h3>
+
+	<label for="recommendationText">
+		What should the company improve or continue doing?
+	</label>
+	<br>
+
+<textarea id="recommendationText"
+		  name="recommendationText"
+		  rows="5"
+		  cols="50"
+		  required
+		  aria-required="true"
+		  aria-invalid="false"
+		  aria-describedby="recommendationError"
+		  onblur="validateRecommendation();"
+		  oninput="clearRecommendationError();">
+</textarea>
+
+	<p id="recommendationError"
+	   role="alert"
+	   style="color:red; display:none;">
+		Please provide a recommendation.
 	</p>
 
 </body>
