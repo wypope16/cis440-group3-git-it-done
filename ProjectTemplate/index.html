@@ -1,320 +1,80 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 	<meta charset="utf-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title>Employee Mood Check-In</title>
+	<title></title>
 
+	<!--DO NOT FORGET THIS SCRIPT TAG SO YOU CAN USE JQUERY!!!!!-->
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
-	<style>
-		body {
-			max-width: 700px;
-			margin: 30px auto;
-			padding: 0 20px;
-			font-family: Arial, sans-serif;
-		}
+	<!--YOUR OWN JAVASCRIPT CAN GO RIGHT HERE-->
+	<script type="text/javascript">
 
-		fieldset {
-			margin-bottom: 20px;
-			padding: 15px;
-		}
+		function TestButtonHandler() {
+			var webMethod = "ProjectServices.asmx/TestConnection";
+			var parameters = "{}";
 
-		label {
-			display: inline-block;
-			margin: 5px 0;
-		}
-
-		textarea {
-			box-sizing: border-box;
-			width: 100%;
-			min-height: 100px;
-			margin-top: 6px;
-			padding: 10px;
-		}
-
-		button {
-			padding: 10px 18px;
-			color: white;
-			background-color: #0056b3;
-			border: 0;
-			cursor: pointer;
-		}
-
-			button:disabled {
-				background-color: #999;
-				cursor: not-allowed;
-			}
-
-		.field-error {
-			display: none;
-			color: #b00020;
-		}
-
-		#statusMessage {
-			display: none;
-			margin-top: 15px;
-			padding: 12px;
-			border-radius: 4px;
-		}
-
-			#statusMessage.success {
-				display: block;
-				color: #155724;
-				background-color: #d4edda;
-			}
-
-			#statusMessage.error {
-				display: block;
-				color: #721c24;
-				background-color: #f8d7da;
-			}
-	</style>
-
-	<script>
-		$(function () {
-			$("#checkInForm").on("submit", function (event) {
-				event.preventDefault();
-
-				var submitButton = $("#submitBtn");
-
-				if (submitButton.prop("disabled")) {
-					return;
+			//jQuery ajax method
+			$.ajax({
+				type: "POST",
+				url: webMethod,
+				data: parameters,
+				contentType: "application/json; charset=utf-8",
+				dataType: "json",
+				success: function (msg) {
+					var responseFromServer = msg.d;
+					alert(responseFromServer);
+				},
+				error: function (e) {
+					alert("this code will only execute if javascript is unable to access the webservice");
 				}
-
-				var mood = $('input[name="mood"]:checked').val();
-				var workplaceFactor =
-					$('input[name="factor"]:checked').val();
-				var causeText = $("#causeText").val().trim();
-				var recommendationText =
-					$("#recommendationText").val().trim();
-
-				var valid = true;
-
-				$(".field-error").hide();
-
-				if (!mood) {
-					$("#moodError").show();
-					valid = false;
-				}
-
-				if (!workplaceFactor) {
-					$("#factorError").show();
-					valid = false;
-				}
-
-				if (!causeText) {
-					$("#causeError").show();
-					valid = false;
-				}
-
-				if (!recommendationText) {
-					$("#recommendationError").show();
-					valid = false;
-				}
-
-				if (!valid) {
-					$("#statusMessage")
-						.removeClass("success")
-						.addClass("error")
-						.text("Please complete every required field.")
-						.show()
-						.focus();
-
-					return;
-				}
-
-				var parameters = JSON.stringify({
-					mood: mood,
-					workplaceFactor: workplaceFactor,
-					causeText: causeText,
-					recommendationText: recommendationText
-				});
-
-				submitButton
-					.prop("disabled", true)
-					.text("Submitting...");
-
-				$("#statusMessage")
-					.removeClass("success error")
-					.hide()
-					.text("");
-
-				$.ajax({
-					type: "POST",
-					url: "ProjectServices.asmx/SubmitMoodCheckIn",
-					data: parameters,
-					contentType: "application/json; charset=utf-8",
-					dataType: "json",
-
-					success: function (msg) {
-						var result = msg.d;
-
-						if (result && result.Success) {
-							$("#statusMessage")
-								.addClass("success")
-								.text(result.Message)
-								.show()
-								.focus();
-
-							$("#checkInForm")[0].reset();
-						} else {
-							var message =
-								result && result.Message
-									? result.Message
-									: "The check-in could not be recorded.";
-
-							$("#statusMessage")
-								.addClass("error")
-								.text(message)
-								.show()
-								.focus();
-						}
-					},
-
-					error: function () {
-						$("#statusMessage")
-							.addClass("error")
-							.text(
-								"The check-in could not be recorded. Please try again."
-							)
-							.show()
-							.focus();
-					},
-
-					complete: function () {
-						submitButton
-							.prop("disabled", false)
-							.text("Submit Check-In");
-					}
-				});
 			});
-		});
+		}
+
+		function validateFactor() {
+			let selectedFactor = document.querySelector('input[name="factor"]:checked');
+
+			if (!selectedFactor) {
+				document.getElementById("factorError").style.display = "block";
+				return false;
+			}
+
+			document.getElementById("factorError").style.display = "none";
+			return true;
+		}
+
 	</script>
+	<!--END OF YOUR OWN JAVASCRIPT-->
+
+	<!--AND YOUR OWN CSS CAN GO HERE AS WELL-->
+	<style>
+
+	</style>
+	<!--END OF YOUR OWN CSS-->
+
 </head>
 
 <body>
-	<h1>Employee Mood Check-In</h1>
 
-	<p>
-		Share how work is going without attaching your identity to the
-		submitted feedback.
+	<button onclick="if(validateFactor()) TestButtonHandler();">
+		Click here to test connection!
+	</button>
+
+	<hr>
+
+	<h3>Select Workplace Factor</h3>
+
+	<input type="radio" name="factor" value="Workload"> Workload<br>
+	<input type="radio" name="factor" value="Management"> Management<br>
+	<input type="radio" name="factor" value="Scheduling"> Scheduling<br>
+	<input type="radio" name="factor" value="Technology"> Technology<br>
+	<input type="radio" name="factor" value="Communication"> Communication<br>
+	<input type="radio" name="factor" value="Team Relationships"> Team Relationships<br>
+	<input type="radio" name="factor" value="Workplace Environment"> Workplace Environment<br>
+
+	<p id="factorError" style="color:red; display:none;">
+		Please select a workplace factor.
 	</p>
 
-	<form id="checkInForm">
-		<fieldset>
-			<legend>Select your current mood</legend>
-
-			<label>
-				<input type="radio" name="mood" value="Good" />
-				Good
-			</label><br />
-
-			<label>
-				<input type="radio" name="mood" value="Okay" />
-				Okay
-			</label><br />
-
-			<label>
-				<input type="radio" name="mood" value="Stressed" />
-				Stressed
-			</label><br />
-
-			<label>
-				<input type="radio" name="mood" value="Frustrated" />
-				Frustrated
-			</label><br />
-
-			<label>
-				<input type="radio" name="mood" value="Overwhelmed" />
-				Overwhelmed
-			</label>
-
-			<p id="moodError" class="field-error">
-				Please select a mood.
-			</p>
-		</fieldset>
-
-		<fieldset>
-			<legend>Select the workplace factor affecting your mood</legend>
-
-			<label>
-				<input type="radio" name="factor" value="Workload" />
-				Workload
-			</label><br />
-
-			<label>
-				<input type="radio" name="factor" value="Management" />
-				Management
-			</label><br />
-
-			<label>
-				<input type="radio" name="factor" value="Scheduling" />
-				Scheduling
-			</label><br />
-
-			<label>
-				<input type="radio" name="factor" value="Technology" />
-				Technology
-			</label><br />
-
-			<label>
-				<input type="radio" name="factor" value="Communication" />
-				Communication
-			</label><br />
-
-			<label>
-				<input type="radio"
-					   name="factor"
-					   value="Team Relationships" />
-				Team Relationships
-			</label><br />
-
-			<label>
-				<input type="radio"
-					   name="factor"
-					   value="Workplace Environment" />
-				Workplace Environment
-			</label>
-
-			<p id="factorError" class="field-error">
-				Please select a workplace factor.
-			</p>
-		</fieldset>
-
-		<p>
-			<label for="causeText">
-				Explain what caused your selected mood:
-			</label>
-
-			<textarea id="causeText"></textarea>
-
-			<span id="causeError" class="field-error">
-				Please explain what caused your mood.
-			</span>
-		</p>
-
-		<p>
-			<label for="recommendationText">
-				What should the company improve or continue doing?
-			</label>
-
-			<textarea id="recommendationText"></textarea>
-
-			<span id="recommendationError" class="field-error">
-				Please provide a recommendation.
-			</span>
-		</p>
-
-		<button type="submit" id="submitBtn">
-			Submit Check-In
-		</button>
-	</form>
-
-	<div id="statusMessage"
-		 role="alert"
-		 aria-live="polite"
-		 tabindex="-1">
-	</div>
 </body>
 </html>
