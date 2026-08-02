@@ -13,6 +13,14 @@
         function SubmitMoodCheckIn(event) {
             event.preventDefault();
 
+            const submitButton = document.getElementById("submitBtn");
+            const statusBox = document.getElementById("statusMessage");
+
+            // Prevent another submission while the first request is running.
+            if (submitButton.disabled) {
+                return;
+            }
+
             if (!validateCheckIn()) {
                 return;
             }
@@ -31,6 +39,12 @@
                     .trim()
             });
 
+            submitButton.disabled = true;
+            submitButton.textContent = "Submitting...";
+
+            statusBox.textContent = "";
+            statusBox.className = "";
+
             $.ajax({
                 type: "POST",
                 url: "ProjectServices.asmx/SubmitMoodCheckIn",
@@ -40,25 +54,32 @@
 
                 success: function (msg) {
                     const result = msg.d;
-                    let statusBox = document.getElementById("statusMessage");
 
                     if (result.Success) {
-                        // Show success message and clear the form
-                        statusBox.textContent = 'Success! Your feedback was successfully recorded.';
-                        statusBox.className = 'success';
+                        statusBox.textContent =
+                            "Success! Your feedback was successfully recorded.";
+                        statusBox.className = "success";
+
                         document.getElementById("checkInForm").reset();
                     } else {
-                        // Show server error message (e.g. database offline)
-                        statusBox.textContent = 'Oops! ' + result.Message;
-                        statusBox.className = 'error';
+                        statusBox.textContent =
+                            "Oops! " + result.Message;
+                        statusBox.className = "error";
                     }
+
+                    statusBox.focus();
                 },
 
                 error: function () {
-                    // Show message if the web service completely fails
-                    let statusBox = document.getElementById("statusMessage");
-                    statusBox.textContent = 'Oops! Could not submit feedback right now. Please try again.';
-                    statusBox.className = 'error';
+                    statusBox.textContent =
+                        "Oops! Could not submit feedback right now. Please try again.";
+                    statusBox.className = "error";
+                    statusBox.focus();
+                },
+
+                complete: function () {
+                    submitButton.disabled = false;
+                    submitButton.textContent = "Submit Check-In";
                 }
             });
         }
@@ -394,14 +415,17 @@ document.addEventListener("DOMContentLoaded", function () {
         </p>
         <br>
 
-        <button type="submit">
+        <button type="submit" id="submitBtn">
             Submit Check-In
         </button>
 
     </form>
 
     <!-- US-06 Submission Confirmation Message -->
-    <div id="statusMessage" role="alert" aria-live="polite"></div>
+    <div id="statusMessage"
+         role="alert"
+         aria-live="polite"
+         tabindex="-1"></div>
 
 </body>
 </html>
