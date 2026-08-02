@@ -133,5 +133,54 @@ namespace ProjectTemplate
                 };
             }
         }
+        [WebMethod(EnableSession = true)]
+        public List<CheckInRecord> GetRecentCheckIns()
+        {
+            List<CheckInRecord> checkIns = new List<CheckInRecord>();
+
+            // Querying the database and ordering by ID descending so the newest check-ins appear first
+            string query = "SELECT * FROM mood_checkins ORDER BY id DESC;";
+
+            try
+            {
+                using (MySqlConnection con = new MySqlConnection(getConString()))
+                using (MySqlCommand cmd = new MySqlCommand(query, con))
+                {
+                    con.Open();
+                    using (MySqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            checkIns.Add(new CheckInRecord
+                            {
+                                // Formatting the timestamp for a clean dashboard view
+                                SubmissionDate = Convert.ToDateTime(reader["created_at"]).ToString("MMMM dd, yyyy"),
+                                Mood = reader["mood"].ToString(),
+                                WorkplaceFactor = reader["workplace_factor"].ToString(),
+                                CauseText = reader["cause_text"].ToString(),
+                                RecommendationText = reader["recommendation_text"].ToString()
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // If the connection fails, it will return an empty list and trigger the UI's error message
+                Console.WriteLine(ex.Message);
+            }
+
+            return checkIns;
+        }
+    }
+
+    // This class organizes the data before sending it securely to the frontend
+    public class CheckInRecord
+    {
+        public string SubmissionDate { get; set; }
+        public string Mood { get; set; }
+        public string WorkplaceFactor { get; set; }
+        public string CauseText { get; set; }
+        public string RecommendationText { get; set; }
     }
 }

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Manager Dashboard - Recent Check-ins</title>
+    <!-- DO NOT FORGET THIS SCRIPT TAG SO YOU CAN USE JQUERY! -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+        .checkin-card { 
+            border: 1px solid #ccc; 
+            border-radius: 8px; 
+            padding: 15px; 
+            margin-bottom: 15px; 
+            background: #f9f9f9; 
+        }
+        .checkin-header { font-weight: bold; margin-bottom: 10px; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        .checkin-body p { margin: 8px 0; }
+        .empty-msg { font-style: italic; color: #666; font-size: 1.1em; }
+    </style>
+</head>
+<body>
+
+    <h2>Recent Anonymous Check-ins</h2>
+    <hr>
+    
+    <!-- This is where the jQuery will inject the check-in cards -->
+    <div id="checkinContainer">
+        <p>Loading recent check-ins...</p>
+    </div>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            
+            // =========================================================================
+            // TODO FOR US-08: 
+            // Plug in your security check here! If the manager is not logged in, 
+            // redirect them back to the login page before the AJAX call runs.
+            // Example:
+            // if (sessionStorage.getItem("isLoggedIn") !== "true") {
+            //     window.location.href = "login.html";
+            //     return;
+            // }
+            // =========================================================================
+
+            // Fetch the data as soon as the page loads
+            $.ajax({
+                type: "POST",
+                url: "ProjectServices.asmx/GetRecentCheckIns",
+                data: "{}",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+
+                success: function (msg) {
+                    const checkIns = msg.d;
+                    const container = $("#checkinContainer");
+                    
+                    // Clear out the "Loading..." text
+                    container.empty();
+
+                    // US-09 Requirement: Show a clear message when no check-ins exist
+                    if (checkIns.length === 0) {
+                        container.append("<p class='empty-msg'>No anonymous check-ins have been recorded yet.</p>");
+                        return;
+                    }
+
+                    // Loop through the data and create a visual card for each check-in
+                    checkIns.forEach(function (record) {
+                        const card = `
+                            <div class="checkin-card">
+                                <div class="checkin-header">
+                                    Date: ${record.SubmissionDate} | Mood: ${record.Mood} | Factor: ${record.WorkplaceFactor}
+                                </div>
+                                <div class="checkin-body">
+                                    <p><strong>Cause:</strong> ${record.CauseText}</p>
+                                    <p><strong>Recommendation:</strong> ${record.RecommendationText}</p>
+                                </div>
+                            </div>
+                        `;
+                        container.append(card);
+                    });
+                },
+
+                error: function () {
+                    // Error message if the database is offline
+                    $("#checkinContainer").html("<p class='empty-msg' style='color:red;'>Oops! Error loading check-ins. Please check the database connection.</p>");
+                }
+            });
+        });
+    </script>
+</body>
+</html>
