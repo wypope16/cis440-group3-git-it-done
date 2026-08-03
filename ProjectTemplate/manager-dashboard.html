@@ -59,9 +59,19 @@
     <script type="text/javascript">
 
         function logoutManager() {
+    $.ajax({
+        type: "POST",
+        url: "ProjectServices.asmx/LogoutManager",
+        data: "{}",
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+
+        complete: function () {
             sessionStorage.removeItem("isManager");
             window.location.href = "manager-login.html";
         }
+    });
+}
 
         $(document).ready(function () {
 
