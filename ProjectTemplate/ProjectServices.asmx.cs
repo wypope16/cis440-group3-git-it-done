@@ -182,7 +182,7 @@ public ManagerLoginResult LogoutManager()
 }
 
             // Querying the database and ordering by ID descending so the newest check-ins appear first
-            string query = "SELECT * FROM mood_checkins ORDER BY id DESC;";
+            string query = "SELECT * FROM mood_checkins ORDER BY checkin_id DESC;";
 
             try
             {
