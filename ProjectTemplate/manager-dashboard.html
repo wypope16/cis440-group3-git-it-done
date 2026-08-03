@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <title>Manager Dashboard - Recent Check-ins</title>
 
-    <!-- DO NOT FORGET THIS SCRIPT TAG SO YOU CAN USE JQUERY! -->
+    <!-- jQuery is required for the AJAX web-service calls. -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
     <style>
@@ -40,18 +40,97 @@
             color: #666;
             font-size: 1.1em;
         }
+
+        /* US-07: Manager frequency-setting controls */
+        #frequencySettings {
+            max-width: 600px;
+            margin: 20px 0 24px;
+            padding: 16px;
+            border: 1px solid #777;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+        }
+
+            #frequencySettings h2 {
+                margin-top: 0;
+            }
+
+        #frequencyDays {
+            width: 90px;
+            margin: 8px;
+            padding: 8px;
+        }
+
+        #saveFrequencyButton {
+            padding: 8px 14px;
+            cursor: pointer;
+        }
+
+            #saveFrequencyButton:disabled {
+                cursor: not-allowed;
+                opacity: 0.7;
+            }
+
+        #frequencyStatus {
+            min-height: 24px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+            #frequencyStatus.success {
+                color: #146c2e;
+            }
+
+            #frequencyStatus.error {
+                color: #b00020;
+            }
     </style>
 </head>
 
 <body>
 
-    <h2>Recent Anonymous Check-ins</h2>
+    <button type="button" onclick="logoutManager();">
+        Logout
+    </button>
 
-    <button type="button" onclick="logoutManager()">Logout</button>
+    <!-- US-07: Manager check-in frequency setting -->
+    <section id="frequencySettings">
+        <h2>Check-In Frequency</h2>
+
+        <p>
+            Set the minimum number of days required between employee
+            check-ins.
+        </p>
+
+        <label for="frequencyDays">
+            Days between check-ins:
+        </label>
+
+        <input type="number"
+               id="frequencyDays"
+               min="1"
+               max="365"
+               step="1"
+               required
+               aria-describedby="frequencyStatus">
+
+        <button type="button"
+                id="saveFrequencyButton"
+                onclick="saveCheckInFrequency();">
+            Save Frequency
+        </button>
+
+        <p id="frequencyStatus"
+           role="status"
+           aria-live="polite">
+        </p>
+    </section>
 
     <hr>
 
-    <!-- This is where the jQuery will inject the check-in cards -->
+    <h2>Recent Anonymous Check-ins</h2>
+
+    <!-- Existing US-09 check-in records are inserted here. -->
     <div id="checkinContainer">
         <p>Loading recent check-ins...</p>
     </div>
@@ -59,68 +138,217 @@
     <script type="text/javascript">
 
         function logoutManager() {
-    $.ajax({
-        type: "POST",
-        url: "ProjectServices.asmx/LogoutManager",
-        data: "{}",
-        contentType: "application/json; charset=utf-8",
-        dataType: "json",
-
-        complete: function () {
-            sessionStorage.removeItem("isManager");
-            window.location.href = "manager-login.html";
-        }
-    });
-}
-
-        $(document).ready(function () {
-
-            if (sessionStorage.getItem("isManager") !== "true") {
-                window.location.href = "manager-login.html";
-                return;
-            }
-
-            // Fetch the data as soon as the page loads
             $.ajax({
                 type: "POST",
-                url: "ProjectServices.asmx/GetRecentCheckIns",
+                url: "ProjectServices.asmx/LogoutManager",
                 data: "{}",
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
 
+                complete: function () {
+                    sessionStorage.removeItem("isManager");
+                    window.location.href = "manager-login.html";
+                }
+            });
+        }
+
+        // US-07: Load the currently saved frequency.
+        function loadCheckInFrequency() {
+            const input =
+                document.getElementById("frequencyDays");
+
+            const statusBox =
+                document.getElementById("frequencyStatus");
+
+            $.ajax({
+                type: "POST",
+                url:
+                    "ProjectServices.asmx/GetCheckInFrequency",
+                data: "{}",
+                contentType:
+                    "application/json; charset=utf-8",
+                dataType: "json",
+
+                success: function (msg) {
+                    input.value = msg.d;
+                    statusBox.textContent = "";
+                    statusBox.className = "";
+                },
+
+                error: function () {
+                    statusBox.textContent =
+                        "The current check-in frequency " +
+                        "could not be loaded.";
+
+                    statusBox.className = "error";
+                }
+            });
+        }
+
+        // US-07: Validate and save the manager's setting.
+        function saveCheckInFrequency() {
+            const input =
+                document.getElementById("frequencyDays");
+
+            const statusBox =
+                document.getElementById("frequencyStatus");
+
+            const saveButton =
+                document.getElementById(
+                    "saveFrequencyButton"
+                );
+
+            const frequencyDays = Number(input.value);
+
+            statusBox.textContent = "";
+            statusBox.className = "";
+
+            if (
+                !Number.isInteger(frequencyDays) ||
+                frequencyDays < 1 ||
+                frequencyDays > 365
+            ) {
+                statusBox.textContent =
+                    "Enter a whole number between " +
+                    "1 and 365 days.";
+
+                statusBox.className = "error";
+                input.focus();
+                return;
+            }
+
+            saveButton.disabled = true;
+            saveButton.textContent = "Saving...";
+
+            const parameters = JSON.stringify({
+                frequencyDays: frequencyDays
+            });
+
+            $.ajax({
+                type: "POST",
+                url:
+                    "ProjectServices.asmx/" +
+                    "SaveCheckInFrequency",
+                data: parameters,
+                contentType:
+                    "application/json; charset=utf-8",
+                dataType: "json",
+
+                success: function (msg) {
+                    const result = msg.d;
+
+                    statusBox.textContent =
+                        result.Message;
+
+                    statusBox.className =
+                        result.Success
+                            ? "success"
+                            : "error";
+                },
+
+                error: function () {
+                    statusBox.textContent =
+                        "The frequency setting " +
+                        "could not be saved.";
+
+                    statusBox.className = "error";
+                },
+
+                complete: function () {
+                    saveButton.disabled = false;
+                    saveButton.textContent =
+                        "Save Frequency";
+                }
+            });
+        }
+
+        $(document).ready(function () {
+
+            // Keep the existing manager-login protection.
+            if (
+                sessionStorage.getItem("isManager") !==
+                "true"
+            ) {
+                window.location.href =
+                    "manager-login.html";
+
+                return;
+            }
+
+            // US-07: Load the saved frequency after
+            // confirming that the manager is logged in.
+            loadCheckInFrequency();
+
+            // Existing US-09 recent-check-in service.
+            $.ajax({
+                type: "POST",
+                url:
+                    "ProjectServices.asmx/" +
+                    "GetRecentCheckIns",
+                data: "{}",
+                contentType:
+                    "application/json; charset=utf-8",
+                dataType: "json",
+
                 success: function (msg) {
                     const checkIns = msg.d;
-                    const container = $("#checkinContainer");
+                    const container =
+                        $("#checkinContainer");
 
-                    // Clear out the "Loading..." text
                     container.empty();
 
-                    // US-09 Requirement: Show a clear message when no check-ins exist
                     if (checkIns.length === 0) {
-                        container.append("<p class='empty-msg'>No anonymous check-ins have been recorded yet.</p>");
+                        container.append(
+                            "<p class='empty-msg'>" +
+                            "No anonymous check-ins have " +
+                            "been recorded yet.</p>"
+                        );
+
                         return;
                     }
 
-                    // Loop through the data and create a visual card for each check-in
                     checkIns.forEach(function (record) {
                         const card = `
-                            <div class="checkin-card">
-                                <div class="checkin-header">
-                                    Date: ${record.SubmissionDate} | Mood: ${record.Mood} | Factor: ${record.WorkplaceFactor}
+                                <div class="checkin-card">
+                                    <div class="checkin-header">
+                                        Date:
+                                        ${record.SubmissionDate}
+                                        |
+                                        Mood:
+                                        ${record.Mood}
+                                        |
+                                        Factor:
+                                        ${record.WorkplaceFactor}
+                                    </div>
+
+                                    <div class="checkin-body">
+                                        <p>
+                                            <strong>Cause:</strong>
+                                            ${record.CauseText}
+                                        </p>
+
+                                        <p>
+                                            <strong>
+                                                Recommendation:
+                                            </strong>
+                                            ${record.RecommendationText}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div class="checkin-body">
-                                    <p><strong>Cause:</strong> ${record.CauseText}</p>
-                                    <p><strong>Recommendation:</strong> ${record.RecommendationText}</p>
-                                </div>
-                            </div>
-                        `;
+                            `;
+
                         container.append(card);
                     });
                 },
 
                 error: function () {
-                    // Error message if the database is offline
-                    $("#checkinContainer").html("<p class='empty-msg' style='color:red;'>Oops! Error loading check-ins. Please check the database connection.</p>");
+                    $("#checkinContainer").html(
+                        "<p class='empty-msg' " +
+                        "style='color:red;'>" +
+                        "Oops! Error loading check-ins. " +
+                        "Please check the database " +
+                        "connection.</p>"
+                    );
                 }
             });
         });
