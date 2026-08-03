@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Manager Login</title>
+</head>
+<body>
+
+    <h2>Manager Login</h2>
+
+    <label for="username">Username:</label><br>
+    <input type="text" id="username" placeholder="Username"><br><br>
+
+    <label for="password">Password:</label><br>
+    <input type="password" id="password" placeholder="Password"><br><br>
+
+    <button type="button" onclick="login()">Login</button>
+
+    <p id="loginError" style="color:red; display:none;">
+        Invalid or blank credentials.
+    </p>
+
+    <script>
+        function login() {
+            let user = document.getElementById("username").value.trim();
+            let pass = document.getElementById("password").value.trim();
+
+            if (user === "admin" && pass === "admin") {
+                sessionStorage.setItem("isManager", "true");
+                window.location.href = "manager-dashboard.html";
+            } else {
+                document.getElementById("loginError").style.display = "block";
+            }
+        }
+    </script>
+
+</body>
+</html>
