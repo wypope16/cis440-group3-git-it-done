@@ -215,6 +215,107 @@ public ManagerLoginResult LogoutManager()
 
             return checkIns;
         }
+
+
+        // US-07: Loads the currently saved number of days
+        // required between employee check-ins.
+        [WebMethod(EnableSession = true)]
+        public int GetCheckInFrequency()
+        {
+            const string query = @"
+            SELECT frequency_days
+            FROM checkin_settings
+            WHERE setting_id = 1;";
+
+            try
+            {
+                using (MySqlConnection con =
+                    new MySqlConnection(getConString()))
+                using (MySqlCommand cmd =
+                    new MySqlCommand(query, con))
+                {
+                    con.Open();
+
+                    object result = cmd.ExecuteScalar();
+
+                    if (result == null || result == DBNull.Value)
+                    {
+                        return 7;
+                    }
+
+                    return Convert.ToInt32(result);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+
+                // Seven days is the default value for the project.
+                return 7;
+            }
+        }
+
+        // US-07: Saves the manager's selected check-in frequency.
+        [WebMethod(EnableSession = true)]
+        public MoodCheckInResult SaveCheckInFrequency(int frequencyDays)
+        {
+            if (frequencyDays < 1 || frequencyDays > 365)
+            {
+                return new MoodCheckInResult
+                {
+                    Success = false,
+                    Message = "Enter a frequency between 1 and 365 days."
+                };
+            }
+
+            const string query = @"
+            UPDATE checkin_settings
+            SET frequency_days = @frequencyDays
+            WHERE setting_id = 1;";
+
+            try
+            {
+                using (MySqlConnection con =
+                    new MySqlConnection(getConString()))
+                using (MySqlCommand cmd =
+                    new MySqlCommand(query, con))
+                {
+                    cmd.Parameters.Add(
+                        "@frequencyDays",
+                        MySqlDbType.Int32
+                    ).Value = frequencyDays;
+
+                    con.Open();
+
+                    int rowsAffected = cmd.ExecuteNonQuery();
+
+                    if (rowsAffected == 1)
+                    {
+                        return new MoodCheckInResult
+                        {
+                            Success = true,
+                            Message = "The check-in frequency was saved."
+                        };
+                    }
+
+                    return new MoodCheckInResult
+                    {
+                        Success = false,
+                        Message = "The frequency setting could not be found."
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+
+                return new MoodCheckInResult
+                {
+                    Success = false,
+                    Message = "The frequency setting could not be saved."
+                };
+            }
+        }
     }
 public class ManagerLoginResult
 {
