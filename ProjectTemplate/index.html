@@ -1,20 +1,49 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset="utf-8" />
-	<title></title>
+    <meta charset="utf-8" />
+    <title></title>
 
-	<!--DO NOT FORGET THIS SCRIPT TAG SO YOU CAN USE JQUERY!!!!!-->
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <!-- DO NOT FORGET THIS SCRIPT TAG SO YOU CAN USE JQUERY! -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
-	<!--YOUR OWN JAVASCRIPT CAN GO RIGHT HERE-->
-	<script type="text/javascript">
+    <!-- YOUR OWN JAVASCRIPT CAN GO RIGHT HERE -->
+    <script type="text/javascript">
+
+        // US-07:
+        // Creates an anonymous identifier for this browser.
+        // This does not collect the employee's name, email, or employee ID.
+        function getAnonymousCheckInToken() {
+            const storageKey = "cis440AnonymousCheckInToken";
+            let token = localStorage.getItem(storageKey);
+
+            if (!token) {
+                if (
+                    window.crypto &&
+                    typeof window.crypto.randomUUID === "function"
+                ) {
+                    token = window.crypto.randomUUID();
+                } else {
+                    // Fallback for browsers that do not support randomUUID().
+                    token =
+                        Date.now().toString(36) +
+                        Math.random().toString(36).substring(2);
+                }
+
+                localStorage.setItem(storageKey, token);
+            }
+
+            return token;
+        }
 
         function SubmitMoodCheckIn(event) {
             event.preventDefault();
 
-            const submitButton = document.getElementById("submitBtn");
-            const statusBox = document.getElementById("statusMessage");
+            const submitButton =
+                document.getElementById("submitBtn");
+
+            const statusBox =
+                document.getElementById("statusMessage");
 
             // Prevent another submission while the first request is running.
             if (submitButton.disabled) {
@@ -29,14 +58,24 @@
                 'input[name="factor"]:checked'
             );
 
+            // US-07:
+            // anonymousToken is stored separately from the feedback
+            // and is used only for frequency-control checking.
             const parameters = JSON.stringify({
                 mood: getSelectedMood(),
                 workplaceFactor: selectedFactor.value,
-                causeText: document.getElementById("causeText").value.trim(),
+
+                causeText: document
+                    .getElementById("causeText")
+                    .value
+                    .trim(),
+
                 recommendationText: document
                     .getElementById("recommendationText")
                     .value
-                    .trim()
+                    .trim(),
+
+                anonymousToken: getAnonymousCheckInToken()
             });
 
             submitButton.disabled = true;
@@ -57,13 +96,19 @@
 
                     if (result.Success) {
                         statusBox.textContent =
-                            "Success! Your feedback was successfully recorded.";
+                            "Success! " + result.Message;
+
                         statusBox.className = "success";
 
-                        document.getElementById("checkInForm").reset();
+                        document
+                            .getElementById("checkInForm")
+                            .reset();
                     } else {
+                        // This displays the clear restricted-period
+                        // message returned by SubmitMoodCheckIn.
                         statusBox.textContent =
                             "Oops! " + result.Message;
+
                         statusBox.className = "error";
                     }
 
@@ -72,7 +117,9 @@
 
                 error: function () {
                     statusBox.textContent =
-                        "Oops! Could not submit feedback right now. Please try again.";
+                        "Oops! Could not submit feedback right now. " +
+                        "Please try again.";
+
                     statusBox.className = "error";
                     statusBox.focus();
                 },
@@ -84,134 +131,246 @@
             });
         }
 
-		function validateFactor() {
-			let selectedFactor = document.querySelector('input[name="factor"]:checked');
+        function validateFactor() {
+            const selectedFactor = document.querySelector(
+                'input[name="factor"]:checked'
+            );
 
-			if (!selectedFactor) {
-				document.getElementById("factorError").style.display = "block";
-				return false;
-			}
+            if (!selectedFactor) {
+                document
+                    .getElementById("factorError")
+                    .style
+                    .display = "block";
 
-			document.getElementById("factorError").style.display = "none";
-			return true;
-		}
+                return false;
+            }
+
+            document
+                .getElementById("factorError")
+                .style
+                .display = "none";
+
+            return true;
+        }
 
         function validateCause() {
-            let causeField = document.getElementById("causeText");
-            let causeError = document.getElementById("causeError");
-            let cause = causeField.value.trim();
+            const causeField =
+                document.getElementById("causeText");
+
+            const causeError =
+                document.getElementById("causeError");
+
+            const cause = causeField.value.trim();
 
             if (cause === "") {
                 causeError.style.display = "block";
-                causeField.setAttribute("aria-invalid", "true");
+                causeField.setAttribute(
+                    "aria-invalid",
+                    "true"
+                );
+
                 return false;
             }
 
             causeError.style.display = "none";
-            causeField.setAttribute("aria-invalid", "false");
+
+            causeField.setAttribute(
+                "aria-invalid",
+                "false"
+            );
+
             return true;
         }
 
         function clearCauseError() {
-            let causeField = document.getElementById("causeText");
+            const causeField =
+                document.getElementById("causeText");
 
             if (causeField.value.trim() !== "") {
-                document.getElementById("causeError").style.display = "none";
-                causeField.setAttribute("aria-invalid", "false");
+                document
+                    .getElementById("causeError")
+                    .style
+                    .display = "none";
+
+                causeField.setAttribute(
+                    "aria-invalid",
+                    "false"
+                );
             }
         }
 
         function validateRecommendation() {
-            let recommendationField = document.getElementById("recommendationText");
-            let recommendationError = document.getElementById("recommendationError");
-            let recommendation = recommendationField.value.trim();
+            const recommendationField =
+                document.getElementById(
+                    "recommendationText"
+                );
+
+            const recommendationError =
+                document.getElementById(
+                    "recommendationError"
+                );
+
+            const recommendation =
+                recommendationField.value.trim();
 
             if (recommendation === "") {
-                recommendationError.style.display = "block";
-                recommendationField.setAttribute("aria-invalid", "true");
+                recommendationError.style.display =
+                    "block";
+
+                recommendationField.setAttribute(
+                    "aria-invalid",
+                    "true"
+                );
+
                 return false;
             }
 
             recommendationError.style.display = "none";
-            recommendationField.setAttribute("aria-invalid", "false");
+
+            recommendationField.setAttribute(
+                "aria-invalid",
+                "false"
+            );
+
             return true;
         }
 
         function clearRecommendationError() {
-            let recommendationField = document.getElementById("recommendationText");
+            const recommendationField =
+                document.getElementById(
+                    "recommendationText"
+                );
 
-            if (recommendationField.value.trim() !== "") {
-                document.getElementById("recommendationError").style.display = "none";
-                recommendationField.setAttribute("aria-invalid", "false");
+            if (
+                recommendationField.value.trim() !== ""
+            ) {
+                document
+                    .getElementById(
+                        "recommendationError"
+                    )
+                    .style
+                    .display = "none";
+
+                recommendationField.setAttribute(
+                    "aria-invalid",
+                    "false"
+                );
             }
         }
-function getSelectedMood() {
-    const selectedMood = document.querySelector(
-        'input[name="mood"]:checked'
-    );
 
-    return selectedMood ? selectedMood.value : "";
-}
+        function getSelectedMood() {
+            const selectedMood =
+                document.querySelector(
+                    'input[name="mood"]:checked'
+                );
 
-function validateMood() {
-    const selectedMood = document.querySelector(
-        'input[name="mood"]:checked'
-    );
-
-    const moodError = document.getElementById("moodError");
-    const moodSelector = document.querySelector(".mood-selector");
-
-    if (!selectedMood) {
-        moodError.style.display = "block";
-        moodSelector.setAttribute("aria-invalid", "true");
-
-        const firstMood = document.querySelector(
-            'input[name="mood"]'
-        );
-
-        if (firstMood) {
-            firstMood.focus();
+            return selectedMood
+                ? selectedMood.value
+                : "";
         }
 
-        return false;
-	}
+        function validateMood() {
+            const selectedMood =
+                document.querySelector(
+                    'input[name="mood"]:checked'
+                );
 
-    moodError.style.display = "none";
-    moodSelector.setAttribute("aria-invalid", "false");
-    return true;
-		}
+            const moodError =
+                document.getElementById("moodError");
+
+            const moodSelector =
+                document.querySelector(
+                    ".mood-selector"
+                );
+
+            if (!selectedMood) {
+                moodError.style.display = "block";
+
+                moodSelector.setAttribute(
+                    "aria-invalid",
+                    "true"
+                );
+
+                const firstMood =
+                    document.querySelector(
+                        'input[name="mood"]'
+                    );
+
+                if (firstMood) {
+                    firstMood.focus();
+                }
+
+                return false;
+            }
+
+            moodError.style.display = "none";
+
+            moodSelector.setAttribute(
+                "aria-invalid",
+                "false"
+            );
+
+            return true;
+        }
+
         function validateCheckIn() {
-            const moodIsValid = validateMood();
-            const factorIsValid = validateFactor();
-            const causeIsValid = validateCause();
-            const recommendationIsValid = validateRecommendation();
+            const moodIsValid =
+                validateMood();
 
-            return moodIsValid &&
+            const factorIsValid =
+                validateFactor();
+
+            const causeIsValid =
+                validateCause();
+
+            const recommendationIsValid =
+                validateRecommendation();
+
+            return (
+                moodIsValid &&
                 factorIsValid &&
                 causeIsValid &&
-                recommendationIsValid;
+                recommendationIsValid
+            );
         }
 
-document.addEventListener("DOMContentLoaded", function () {
-    const moodInputs = document.querySelectorAll(
-        'input[name="mood"]'
-    );
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+                const moodInputs =
+                    document.querySelectorAll(
+                        'input[name="mood"]'
+                    );
 
-    moodInputs.forEach(function (input) {
-        input.addEventListener("change", function () {
-            document.getElementById("moodError").style.display = "none";
+                moodInputs.forEach(function (input) {
+                    input.addEventListener(
+                        "change",
+                        function () {
+                            document
+                                .getElementById(
+                                    "moodError"
+                                )
+                                .style
+                                .display = "none";
 
-            document
-                .querySelector(".mood-selector")
-                .setAttribute("aria-invalid", "false");
-        });
-    });
-});
-	</script>
-	<!--END OF YOUR OWN JAVASCRIPT-->
+                            document
+                                .querySelector(
+                                    ".mood-selector"
+                                )
+                                .setAttribute(
+                                    "aria-invalid",
+                                    "false"
+                                );
+                        }
+                    );
+                });
+            }
+        );
 
-	<!--AND YOUR OWN CSS CAN GO HERE AS WELL-->
-	<style>
+    </script>
+    <!-- END OF YOUR OWN JAVASCRIPT -->
+    <!-- AND YOUR OWN CSS CAN GO HERE AS WELL -->
+    <style>
         /* US-06 Status Message Styles */
         #statusMessage {
             margin-top: 15px;
@@ -220,18 +379,21 @@ document.addEventListener("DOMContentLoaded", function () {
             display: none;
             font-weight: bold;
         }
-        #statusMessage.success {
-            display: block;
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        #statusMessage.error {
-            display: block;
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
+
+            #statusMessage.success {
+                display: block;
+                background-color: #d4edda;
+                color: #155724;
+                border: 1px solid #c3e6cb;
+            }
+
+            #statusMessage.error {
+                display: block;
+                background-color: #f8d7da;
+                color: #721c24;
+                border: 1px solid #f5c6cb;
+            }
+
         .mood-selector {
             margin: 16px 0;
             padding: 16px;
@@ -294,73 +456,134 @@ document.addEventListener("DOMContentLoaded", function () {
             color: #b00020;
             font-weight: bold;
         }
-	</style>
-	<!--END OF YOUR OWN CSS-->
+    </style>
+    <!-- END OF YOUR OWN CSS -->
 
 </head>
 
 <body>
 
-
     <hr>
+
     <form id="checkInForm"
           onsubmit="SubmitMoodCheckIn(event);"
           novalidate>
+
         <!-- US-02: Current mood selection -->
         <fieldset class="mood-selector"
                   aria-describedby="moodError"
                   aria-invalid="false">
-            <legend>Select Your Current Mood</legend>
+
+            <legend>
+                Select Your Current Mood
+            </legend>
 
             <div class="mood-options">
+
                 <label class="mood-option">
-                    <input type="radio" name="mood" value="Good">
+                    <input type="radio"
+                           name="mood"
+                           value="Good">
+
                     <span>Good</span>
                 </label>
 
                 <label class="mood-option">
-                    <input type="radio" name="mood" value="Okay">
+                    <input type="radio"
+                           name="mood"
+                           value="Okay">
+
                     <span>Okay</span>
                 </label>
 
                 <label class="mood-option">
-                    <input type="radio" name="mood" value="Stressed">
+                    <input type="radio"
+                           name="mood"
+                           value="Stressed">
+
                     <span>Stressed</span>
                 </label>
 
                 <label class="mood-option">
-                    <input type="radio" name="mood" value="Frustrated">
+                    <input type="radio"
+                           name="mood"
+                           value="Frustrated">
+
                     <span>Frustrated</span>
                 </label>
 
                 <label class="mood-option">
-                    <input type="radio" name="mood" value="Overwhelmed">
+                    <input type="radio"
+                           name="mood"
+                           value="Overwhelmed">
+
                     <span>Overwhelmed</span>
                 </label>
+
             </div>
 
             <p id="moodError"
                class="validation-message"
                role="alert"
                style="display:none;">
+
                 Please select your current mood.
             </p>
+
         </fieldset>
 
         <hr>
+
         <h3>Select Workplace Factor</h3>
 
-        <input type="radio" name="factor" value="Workload"> Workload<br>
-        <input type="radio" name="factor" value="Management"> Management<br>
-        <input type="radio" name="factor" value="Scheduling"> Scheduling<br>
-        <input type="radio" name="factor" value="Technology"> Technology<br>
-        <input type="radio" name="factor" value="Communication"> Communication<br>
-        <input type="radio" name="factor" value="Team Relationships"> Team Relationships<br>
-        <input type="radio" name="factor" value="Workplace Environment"> Workplace Environment<br>
+        <input type="radio"
+               name="factor"
+               value="Workload">
+        Workload
+        <br>
 
-        <p id="factorError" style="color:red; display:none;">
+        <input type="radio"
+               name="factor"
+               value="Management">
+        Management
+        <br>
+
+        <input type="radio"
+               name="factor"
+               value="Scheduling">
+        Scheduling
+        <br>
+
+        <input type="radio"
+               name="factor"
+               value="Technology">
+        Technology
+        <br>
+
+        <input type="radio"
+               name="factor"
+               value="Communication">
+        Communication
+        <br>
+
+        <input type="radio"
+               name="factor"
+               value="Team Relationships">
+        Team Relationships
+        <br>
+
+        <input type="radio"
+               name="factor"
+               value="Workplace Environment">
+        Workplace Environment
+        <br>
+
+        <p id="factorError"
+           style="color:red; display:none;">
+
             Please select a workplace factor.
         </p>
+
         <hr>
 
         <h3>Mood Explanation</h3>
@@ -368,24 +591,27 @@ document.addEventListener("DOMContentLoaded", function () {
         <label for="causeText">
             What caused your selected mood?
         </label>
+
         <br>
 
-<textarea id="causeText"
-          name="causeText"
-          rows="5"
-          cols="50"
-          required
-          aria-required="true"
-          aria-invalid="false"
-          aria-describedby="causeError"
-          onblur="validateCause();"
-          oninput="clearCauseError();"></textarea>
+        <textarea id="causeText"
+                  name="causeText"
+                  rows="5"
+                  cols="50"
+                  required
+                  aria-required="true"
+                  aria-invalid="false"
+                  aria-describedby="causeError"
+                  onblur="validateCause();"
+                  oninput="clearCauseError();"></textarea>
 
         <p id="causeError"
            role="alert"
            style="color:red; display:none;">
+
             Please explain what caused your selected mood.
         </p>
+
         <hr>
 
         <h3>Actionable Recommendation</h3>
@@ -393,28 +619,32 @@ document.addEventListener("DOMContentLoaded", function () {
         <label for="recommendationText">
             What should the company improve or continue doing?
         </label>
+
         <br>
 
-<textarea id="recommendationText"
-          name="recommendationText"
-          rows="5"
-          cols="50"
-          required
-          aria-required="true"
-          aria-invalid="false"
-          aria-describedby="recommendationError"
-          onblur="validateRecommendation();"
-          oninput="clearRecommendationError();">
-</textarea>
+        <textarea id="recommendationText"
+                  name="recommendationText"
+                  rows="5"
+                  cols="50"
+                  required
+                  aria-required="true"
+                  aria-invalid="false"
+                  aria-describedby="recommendationError"
+                  onblur="validateRecommendation();"
+                  oninput="clearRecommendationError();"></textarea>
 
         <p id="recommendationError"
            role="alert"
            style="color:red; display:none;">
+
             Please provide a recommendation.
         </p>
+
         <br>
 
-        <button type="submit" id="submitBtn">
+        <button type="submit"
+                id="submitBtn">
+
             Submit Check-In
         </button>
 
@@ -424,7 +654,8 @@ document.addEventListener("DOMContentLoaded", function () {
     <div id="statusMessage"
          role="alert"
          aria-live="polite"
-         tabindex="-1"></div>
+         tabindex="-1">
+    </div>
 
 </body>
 </html>
