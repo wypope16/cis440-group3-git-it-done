@@ -37,6 +37,7 @@ namespace ProjectTemplate
 		/////////////////////////////////////////////////////////////////////////
 		//don't forget to include this decoration above each method that you want
 		//to be exposed as a web service!
+		
 		[WebMethod(EnableSession = true)]
 		/////////////////////////////////////////////////////////////////////////
 		public string TestConnection()
@@ -133,13 +134,55 @@ namespace ProjectTemplate
                 };
             }
         }
+		[WebMethod(EnableSession = true)]
+public ManagerLoginResult LoginManager(string username, string password)
+{
+    username = (username ?? string.Empty).Trim();
+    password = (password ?? string.Empty).Trim();
+
+    if (username == "admin" && password == "admin")
+    {
+        Session["IsManager"] = "true";
+
+        return new ManagerLoginResult
+        {
+            Success = true,
+            Message = "Login successful."
+        };
+    }
+
+    Session.Remove("IsManager");
+
+    return new ManagerLoginResult
+    {
+        Success = false,
+        Message = "Invalid or blank credentials."
+    };
+}
+
+[WebMethod(EnableSession = true)]
+public ManagerLoginResult LogoutManager()
+{
+    Session.Remove("IsManager");
+
+    return new ManagerLoginResult
+    {
+        Success = true,
+        Message = "Logged out successfully."
+    };
+}
         [WebMethod(EnableSession = true)]
         public List<CheckInRecord> GetRecentCheckIns()
         {
             List<CheckInRecord> checkIns = new List<CheckInRecord>();
+			if (Session["IsManager"] == null ||
+    !Session["IsManager"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
+{
+    return checkIns;
+}
 
             // Querying the database and ordering by ID descending so the newest check-ins appear first
-            string query = "SELECT * FROM mood_checkins ORDER BY id DESC;";
+            string query = "SELECT * FROM mood_checkins ORDER BY checkin_id DESC;";
 
             try
             {
@@ -173,7 +216,11 @@ namespace ProjectTemplate
             return checkIns;
         }
     }
-
+public class ManagerLoginResult
+{
+    public bool Success { get; set; }
+    public string Message { get; set; }
+}
     // This class organizes the data before sending it securely to the frontend
     public class CheckInRecord
     {
