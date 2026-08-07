@@ -1,14 +1,15 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-	<meta charset="utf-8" />
-	<title></title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Employee Mood Check-In</title>
 
-	<!--DO NOT FORGET THIS SCRIPT TAG SO YOU CAN USE JQUERY!!!!!-->
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <!--DO NOT FORGET THIS SCRIPT TAG SO YOU CAN USE JQUERY!!!!!-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
-	<!--YOUR OWN JAVASCRIPT CAN GO RIGHT HERE-->
-	<script type="text/javascript">
+    <!--YOUR OWN JAVASCRIPT CAN GO RIGHT HERE-->
+    <script type="text/javascript">
 
         function SubmitMoodCheckIn(event) {
             event.preventDefault();
@@ -61,6 +62,13 @@
                         statusBox.className = "success";
 
                         document.getElementById("checkInForm").reset();
+                        document.getElementById("moodResponse").hidden = true;
+
+                        document.getElementById("factorHeading").textContent =
+                            "What affected your day most?";
+
+                        document.querySelector(".section-description").textContent =
+                            "Choose the workplace factor that had the biggest impact.";
                     } else {
                         statusBox.textContent =
                             "Oops! " + result.Message;
@@ -84,17 +92,17 @@
             });
         }
 
-		function validateFactor() {
-			let selectedFactor = document.querySelector('input[name="factor"]:checked');
+        function validateFactor() {
+            let selectedFactor = document.querySelector('input[name="factor"]:checked');
 
-			if (!selectedFactor) {
-				document.getElementById("factorError").style.display = "block";
-				return false;
-			}
+            if (!selectedFactor) {
+                document.getElementById("factorError").style.display = "block";
+                return false;
+            }
 
-			document.getElementById("factorError").style.display = "none";
-			return true;
-		}
+            document.getElementById("factorError").style.display = "none";
+            return true;
+        }
 
         function validateCause() {
             let causeField = document.getElementById("causeText");
@@ -145,41 +153,41 @@
                 recommendationField.setAttribute("aria-invalid", "false");
             }
         }
-function getSelectedMood() {
-    const selectedMood = document.querySelector(
-        'input[name="mood"]:checked'
-    );
+        function getSelectedMood() {
+            const selectedMood = document.querySelector(
+                'input[name="mood"]:checked'
+            );
 
-    return selectedMood ? selectedMood.value : "";
-}
-
-function validateMood() {
-    const selectedMood = document.querySelector(
-        'input[name="mood"]:checked'
-    );
-
-    const moodError = document.getElementById("moodError");
-    const moodSelector = document.querySelector(".mood-selector");
-
-    if (!selectedMood) {
-        moodError.style.display = "block";
-        moodSelector.setAttribute("aria-invalid", "true");
-
-        const firstMood = document.querySelector(
-            'input[name="mood"]'
-        );
-
-        if (firstMood) {
-            firstMood.focus();
+            return selectedMood ? selectedMood.value : "";
         }
 
-        return false;
-	}
+        function validateMood() {
+            const selectedMood = document.querySelector(
+                'input[name="mood"]:checked'
+            );
 
-    moodError.style.display = "none";
-    moodSelector.setAttribute("aria-invalid", "false");
-    return true;
-		}
+            const moodError = document.getElementById("moodError");
+            const moodSelector = document.querySelector(".mood-selector");
+
+            if (!selectedMood) {
+                moodError.style.display = "block";
+                moodSelector.setAttribute("aria-invalid", "true");
+
+                const firstMood = document.querySelector(
+                    'input[name="mood"]'
+                );
+
+                if (firstMood) {
+                    firstMood.focus();
+                }
+
+                return false;
+            }
+
+            moodError.style.display = "none";
+            moodSelector.setAttribute("aria-invalid", "false");
+            return true;
+        }
         function validateCheckIn() {
             const moodIsValid = validateMood();
             const factorIsValid = validateFactor();
@@ -191,27 +199,126 @@ function validateMood() {
                 causeIsValid &&
                 recommendationIsValid;
         }
+        function scrollToSection(elementId) {
+            const target = document.getElementById(elementId);
 
-document.addEventListener("DOMContentLoaded", function () {
-    const moodInputs = document.querySelectorAll(
-        'input[name="mood"]'
-    );
+            if (!target) {
+                return;
+            }
 
-    moodInputs.forEach(function (input) {
-        input.addEventListener("change", function () {
-            document.getElementById("moodError").style.display = "none";
+            const prefersReducedMotion = window.matchMedia(
+                "(prefers-reduced-motion: reduce)"
+            ).matches;
 
-            document
-                .querySelector(".mood-selector")
-                .setAttribute("aria-invalid", "false");
+            target.scrollIntoView({
+                behavior: prefersReducedMotion ? "auto" : "smooth",
+                block: "start"
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const moodInputs = document.querySelectorAll(
+                'input[name="mood"]'
+            );
+            const moodResponses = {
+                Good: {
+                    title: "Glad to hear it.",
+                    message: "Let’s capture what is working well today.",
+                    factorHeading: "What helped your day go well?",
+                    factorDescription:
+                        "Choose the workplace factor that had the most positive impact."
+                },
+
+                Okay: {
+                    title: "Thanks for checking in.",
+                    message: "A little context helps us understand the day better.",
+                    factorHeading: "What shaped your day most?",
+                    factorDescription:
+                        "Choose the workplace factor that had the biggest impact."
+                },
+
+                Stressed: {
+                    title: "Thanks for letting us know.",
+                    message: "Let’s identify what contributed most to the pressure.",
+                    factorHeading: "What added the most pressure today?",
+                    factorDescription:
+                        "Choose the workplace factor that contributed the most."
+                },
+
+                Frustrated: {
+                    title: "Thanks for sharing that.",
+                    message: "Let’s identify what got in the way today.",
+                    factorHeading: "What got in the way today?",
+                    factorDescription:
+                        "Choose the workplace factor that caused the most difficulty."
+                },
+
+                Overwhelmed: {
+                    title: "Thanks for checking in.",
+                    message: "Let’s narrow down what had the biggest impact.",
+                    factorHeading: "What felt hardest to manage today?",
+                    factorDescription:
+                        "Choose the workplace factor that felt most difficult to manage."
+                }
+            };
+
+            moodInputs.forEach(function (input) {
+                input.addEventListener("change", function () {
+                    document.getElementById("moodError").style.display = "none";
+
+                    document
+                        .querySelector(".mood-selector")
+                        .setAttribute("aria-invalid", "false");
+                    const response = moodResponses[input.value];
+
+                    document.getElementById("moodResponseTitle").textContent =
+                        response.title;
+
+                    document.getElementById("moodResponseText").textContent =
+                        response.message;
+
+                    document.getElementById("factorHeading").textContent =
+                        response.factorHeading;
+
+                    document.querySelector(".section-description").textContent =
+                        response.factorDescription;
+
+                    document.getElementById("moodResponse").hidden = false;
+
+                    window.requestAnimationFrame(function () {
+                        scrollToSection("factorHeading");
+                    });
+                });
+            });
+            const factorInputs = document.querySelectorAll(
+                'input[name="factor"]'
+            );
+
+            factorInputs.forEach(function (input) {
+                input.addEventListener("change", function () {
+                    document.getElementById("factorError").style.display = "none";
+
+                    window.requestAnimationFrame(function () {
+                        scrollToSection("causeHeading");
+                    });
+                });
+            });
         });
-    });
-});
-	</script>
-	<!--END OF YOUR OWN JAVASCRIPT-->
-
-	<!--AND YOUR OWN CSS CAN GO HERE AS WELL-->
-	<style>
+    </script>
+    <!--END OF YOUR OWN JAVASCRIPT-->
+    <!--AND YOUR OWN CSS CAN GO HERE AS WELL-->
+    <style>
+        :root {
+            --page-background: #f4f7f5;
+            --surface: #ffffff;
+            --primary: #2f6f65;
+            --primary-dark: #1f514a;
+            --heading: #163f3a;
+            --text: #33413e;
+            --muted: #65736f;
+            --soft-green: #e6f0ec;
+            --border: #cedbd6;
+        }
         /* US-06 Status Message Styles */
         #statusMessage {
             margin-top: 15px;
@@ -220,18 +327,21 @@ document.addEventListener("DOMContentLoaded", function () {
             display: none;
             font-weight: bold;
         }
-        #statusMessage.success {
-            display: block;
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        #statusMessage.error {
-            display: block;
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
+
+            #statusMessage.success {
+                display: block;
+                background-color: #d4edda;
+                color: #155724;
+                border: 1px solid #c3e6cb;
+            }
+
+            #statusMessage.error {
+                display: block;
+                background-color: #f8d7da;
+                color: #721c24;
+                border: 1px solid #f5c6cb;
+            }
+
         .mood-selector {
             margin: 16px 0;
             padding: 16px;
@@ -272,6 +382,20 @@ document.addEventListener("DOMContentLoaded", function () {
                 background-color: #ffffff;
                 text-align: center;
             }
+        .mood-options {
+            width: 100%;
+        }
+
+        .mood-option {
+            width: 100%;
+            min-width: 0;
+        }
+
+            .mood-option span {
+                box-sizing: border-box;
+                width: 100%;
+                min-width: 0;
+            }
 
             .mood-option:hover span {
                 border-color: #111;
@@ -284,22 +408,346 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             .mood-option input:checked + span {
-                border-color: #111;
-                background-color: #d9d9d9;
-                font-weight: bold;
+                border-color: var(--primary, #2f6f65);
+                background-color: var(--primary, #2f6f65);
+                color: #ffffff;
             }
 
         .validation-message {
             margin-top: 10px;
             color: #b00020;
             font-weight: bold;
+            /* US-15: Adaptive check-in design foundation */
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                margin: 0;
+                padding: 48px 20px;
+                background-color: var(--page-background);
+                color: var(--text);
+                font-family: Arial, Helvetica, sans-serif;
+                line-height: 1.5;
+            }
+
+            .checkin-header {
+                width: 100%;
+                max-width: 760px;
+                margin: 0 auto 24px;
+            }
+
+            .eyebrow {
+                margin: 0 0 8px;
+                color: var(--primary);
+                font-size: 0.78rem;
+                font-weight: 700;
+                letter-spacing: 0.12em;
+            }
+
+            .checkin-header h1 {
+                margin: 0 0 12px;
+                color: var(--heading);
+                font-size: clamp(2rem, 5vw, 3rem);
+                line-height: 1.1;
+            }
+
+            .checkin-intro {
+                max-width: 620px;
+                margin: 0 0 18px;
+                color: var(--muted);
+                font-size: 1.05rem;
+            }
+
+            .anonymous-note {
+                margin: 0;
+                padding: 14px 16px;
+                border-left: 4px solid var(--primary);
+                border-radius: 6px;
+                background-color: var(--soft-green);
+                color: var(--heading);
+            }
+
+            .checkin-header + hr {
+                display: none;
+            }
+
+            #checkInForm {
+                width: 100%;
+                max-width: 760px;
+                margin: 0 auto;
+                padding: 32px;
+                border: 1px solid var(--border);
+                border-radius: 14px;
+                background-color: var(--surface);
+                box-shadow: 0 12px 32px rgba(22, 63, 58, 0.08);
+            }
+
+                #checkInForm h3 {
+                    margin-top: 0;
+                    color: var(--heading);
+                }
+
+                #checkInForm hr {
+                    margin: 30px 0;
+                    border: 0;
+                    border-top: 1px solid var(--border);
+                }
+
+                #checkInForm textarea {
+                    display: block;
+                    width: 100%;
+                    min-height: 120px;
+                    margin-top: 8px;
+                    padding: 12px;
+                    border: 1px solid var(--border);
+                    border-radius: 8px;
+                    color: var(--text);
+                    font: inherit;
+                    resize: vertical;
+                }
+
+                    #checkInForm textarea:focus {
+                        border-color: var(--primary);
+                        outline: 3px solid var(--soft-green);
+                    }
+
+            #submitBtn {
+                width: 100%;
+                padding: 13px 20px;
+                border: 0;
+                border-radius: 8px;
+                background-color: var(--primary);
+                color: #ffffff;
+                font-size: 1rem;
+                font-weight: 700;
+                cursor: pointer;
+            }
+
+                #submitBtn:hover {
+                    background-color: var(--primary-dark);
+                }
+
+                #submitBtn:focus-visible {
+                    outline: 3px solid var(--heading);
+                    outline-offset: 3px;
+                }
+
+                #submitBtn:disabled {
+                    cursor: wait;
+                    opacity: 0.65;
+                }
+
+            #statusMessage {
+                width: 100%;
+                max-width: 760px;
+                margin: 16px auto 0;
+            }
+
+            @media (max-width: 600px) {
+                body {
+                    padding: 28px 14px;
+                }
+
+                #checkInForm {
+                    padding: 22px 18px;
+                    border-radius: 10px;
+                }
+
+                .checkin-header h1 {
+                    font-size: 2rem;
+                }
+            }
+        /* US-15: Interactive mood choice cards */
+        .mood-selector {
+            min-width: 0;
+            margin: 0;
+            padding: 0;
+            border: 0;
         }
-	</style>
-	<!--END OF YOUR OWN CSS-->
+
+            .mood-selector legend {
+                padding: 0;
+                color: var(--heading);
+                font-size: 1.4rem;
+                font-weight: 700;
+            }
+
+        #moodHelp {
+            margin: 6px 0 18px;
+            color: var(--muted);
+        }
+
+        .mood-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+            gap: 12px;
+        }
+
+        .mood-option {
+            position: relative;
+            display: block;
+            min-width: 0;
+            cursor: pointer;
+        }
+
+            .mood-option input {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                opacity: 0;
+            }
+
+            .mood-option span {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 100%;
+                min-width: 0;
+                min-height: 88px;
+                padding: 14px 10px;
+                border: 2px solid var(--border);
+                border-radius: 10px;
+                background-color: var(--surface);
+                color: var(--heading);
+                font-weight: 700;
+                text-align: center;
+                transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
+            }
+
+            .mood-option:hover span {
+                border-color: var(--primary);
+                background-color: var(--soft-green);
+                transform: translateY(-2px);
+            }
+
+            .mood-option input:checked + span {
+                border-color: var(--primary);
+                background-color: var(--primary);
+                color: #ffffff;
+            }
+
+            .mood-option input:focus-visible + span {
+                outline: 3px solid var(--heading);
+                outline-offset: 3px;
+            }
+
+        #moodError {
+            margin-bottom: 0;
+        }
+        /* US-15: Workplace factor cards */
+        .section-description {
+            margin: -10px 0 16px;
+            color: var(--muted);
+        }
+
+        .factor-options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .factor-option {
+            position: relative;
+            display: block;
+            width: 100%;
+            cursor: pointer;
+        }
+
+            .factor-option input {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                opacity: 0;
+            }
+
+            .factor-option span {
+                display: flex;
+                align-items: center;
+                width: 100%;
+                min-height: 58px;
+                padding: 13px 18px;
+                border: 2px solid var(--border);
+                border-radius: 10px;
+                background-color: var(--surface);
+                color: var(--heading);
+                font-weight: 700;
+                transition: border-color 160ms ease, background-color 160ms ease;
+            }
+
+            .factor-option:hover span {
+                border-color: var(--primary);
+                background-color: var(--soft-green);
+            }
+
+            .factor-option input:checked + span {
+                border-color: var(--primary);
+                background-color: var(--primary);
+                color: #ffffff;
+            }
+
+            .factor-option input:focus-visible + span {
+                outline: 3px solid var(--heading);
+                outline-offset: 3px;
+            }
+        /* US-15: Adaptive mood response */
+        .mood-response {
+            margin-top: 20px;
+            padding: 16px 18px;
+            border-left: 4px solid var(--primary);
+            border-radius: 8px;
+            background-color: var(--soft-green);
+        }
+
+        .mood-response-title {
+            margin: 0 0 4px;
+            color: var(--heading);
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        .mood-response-text {
+            margin: 0;
+            color: var(--text);
+        }
+
+        #factorHeading,
+        #causeHeading {
+            scroll-margin-top: 24px;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .mood-option span,
+            .factor-option span {
+                transition: none;
+            }
+
+            .mood-option:hover span {
+                transform: none;
+            }
+        }
+    </style>
+    <!--END OF YOUR OWN CSS-->
 
 </head>
 
 <body>
+    <header class="checkin-header">
+        <p class="eyebrow">EMPLOYEE WELL-BEING</p>
+
+        <h1>How are you feeling today?</h1>
+
+        <p class="checkin-intro">
+            Take a moment to share how work is feeling. This check-in should take less than a minute.
+        </p>
+
+        <p class="anonymous-note">
+            <strong>Your response is anonymous.</strong>
+            This form does not ask for your name or employee information.
+        </p>
+    </header>
 
 
     <hr>
@@ -308,33 +756,52 @@ document.addEventListener("DOMContentLoaded", function () {
           novalidate>
         <!-- US-02: Current mood selection -->
         <fieldset class="mood-selector"
-                  aria-describedby="moodError"
-                  aria-invalid="false">
-            <legend>Select Your Current Mood</legend>
+                  aria-describedby="moodHelp moodError">
+
+            <legend>How is work feeling today?</legend>
+
+            <p id="moodHelp">
+                Choose the option that best matches how you feel right now.
+            </p>
 
             <div class="mood-options">
                 <label class="mood-option">
-                    <input type="radio" name="mood" value="Good">
+                    <input type="radio"
+                           id="moodGood"
+                           name="mood"
+                           value="Good" />
                     <span>Good</span>
                 </label>
 
                 <label class="mood-option">
-                    <input type="radio" name="mood" value="Okay">
+                    <input type="radio"
+                           id="moodOkay"
+                           name="mood"
+                           value="Okay" />
                     <span>Okay</span>
                 </label>
 
                 <label class="mood-option">
-                    <input type="radio" name="mood" value="Stressed">
+                    <input type="radio"
+                           id="moodStressed"
+                           name="mood"
+                           value="Stressed" />
                     <span>Stressed</span>
                 </label>
 
                 <label class="mood-option">
-                    <input type="radio" name="mood" value="Frustrated">
+                    <input type="radio"
+                           id="moodFrustrated"
+                           name="mood"
+                           value="Frustrated" />
                     <span>Frustrated</span>
                 </label>
 
                 <label class="mood-option">
-                    <input type="radio" name="mood" value="Overwhelmed">
+                    <input type="radio"
+                           id="moodOverwhelmed"
+                           name="mood"
+                           value="Overwhelmed" />
                     <span>Overwhelmed</span>
                 </label>
             </div>
@@ -343,27 +810,74 @@ document.addEventListener("DOMContentLoaded", function () {
                class="validation-message"
                role="alert"
                style="display:none;">
-                Please select your current mood.
+                Please select how you are feeling.
             </p>
         </fieldset>
+        <div id="moodResponse"
+             class="mood-response"
+             aria-live="polite"
+             hidden>
 
+            <p id="moodResponseTitle" class="mood-response-title"></p>
+            <p id="moodResponseText" class="mood-response-text"></p>
+        </div>
         <hr>
-        <h3>Select Workplace Factor</h3>
+        <h3 id="factorHeading">What affected your day most?</h3>
 
-        <input type="radio" name="factor" value="Workload"> Workload<br>
-        <input type="radio" name="factor" value="Management"> Management<br>
-        <input type="radio" name="factor" value="Scheduling"> Scheduling<br>
-        <input type="radio" name="factor" value="Technology"> Technology<br>
-        <input type="radio" name="factor" value="Communication"> Communication<br>
-        <input type="radio" name="factor" value="Team Relationships"> Team Relationships<br>
-        <input type="radio" name="factor" value="Workplace Environment"> Workplace Environment<br>
+        <p class="section-description">
+            Choose the workplace factor that had the biggest impact.
+        </p>
 
-        <p id="factorError" style="color:red; display:none;">
+        <div class="factor-options"
+             role="radiogroup"
+             aria-labelledby="factorHeading"
+             aria-describedby="factorError">
+
+            <label class="factor-option">
+                <input type="radio" name="factor" value="Workload">
+                <span>Workload</span>
+            </label>
+
+            <label class="factor-option">
+                <input type="radio" name="factor" value="Management">
+                <span>Management</span>
+            </label>
+
+            <label class="factor-option">
+                <input type="radio" name="factor" value="Scheduling">
+                <span>Scheduling</span>
+            </label>
+
+            <label class="factor-option">
+                <input type="radio" name="factor" value="Technology">
+                <span>Technology</span>
+            </label>
+
+            <label class="factor-option">
+                <input type="radio" name="factor" value="Communication">
+                <span>Communication</span>
+            </label>
+
+            <label class="factor-option">
+                <input type="radio" name="factor" value="Team Relationships">
+                <span>Team Relationships</span>
+            </label>
+
+            <label class="factor-option">
+                <input type="radio" name="factor" value="Workplace Environment">
+                <span>Workplace Environment</span>
+            </label>
+        </div>
+
+        <p id="factorError"
+           class="validation-message"
+           role="alert"
+           style="display:none;">
             Please select a workplace factor.
         </p>
         <hr>
 
-        <h3>Mood Explanation</h3>
+        <h3 id="causeHeading">Tell us a little more</h3>
 
         <label for="causeText">
             What caused your selected mood?
@@ -382,8 +896,9 @@ document.addEventListener("DOMContentLoaded", function () {
           oninput="clearCauseError();"></textarea>
 
         <p id="causeError"
+           class="validation-message"
            role="alert"
-           style="color:red; display:none;">
+           style="display:none;">
             Please explain what caused your selected mood.
         </p>
         <hr>
@@ -408,8 +923,9 @@ document.addEventListener("DOMContentLoaded", function () {
 </textarea>
 
         <p id="recommendationError"
+           class="validation-message"
            role="alert"
-           style="color:red; display:none;">
+           style="display:none;">
             Please provide a recommendation.
         </p>
         <br>
