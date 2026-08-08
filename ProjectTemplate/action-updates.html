@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Management Action Updates</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: auto;
+        }
+
+        .update-card {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #f9f9f9;
+        }
+
+        .update-title {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+
+        .update-description {
+            margin: 8px 0;
+        }
+
+        .update-status {
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        .update-date {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 6px;
+        }
+
+        .empty-msg {
+            font-style: italic;
+            color: #666;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Management Action Updates</h2>
+
+    <p>
+        View recent updates from management about workplace concerns and actions being taken.
+    </p>
+
+    <hr>
+
+    <div id="updatesContainer">
+        <p class="empty-msg">Loading management action updates...</p>
+    </div>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $.ajax({
+                type: "POST",
+                url: "ProjectServices.asmx/GetManagementActionUpdates",
+                data: "{}",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+
+                success: function (msg) {
+                    const updates = msg.d;
+                    const container = $("#updatesContainer");
+
+                    container.empty();
+
+                    if (!updates || updates.length === 0) {
+                        container.html("<p class='empty-msg'>No management action updates have been posted yet.</p>");
+                        return;
+                    }
+
+                    updates.forEach(function (update) {
+                        const card = `
+                            <div class="update-card">
+                                <div class="update-title">${update.Title}</div>
+                                <p class="update-description">${update.Description}</p>
+                                <div class="update-status">Status: ${update.Status}</div>
+                                <div class="update-date">Date: ${update.UpdateDate}</div>
+                            </div>
+                        `;
+
+                        container.append(card);
+                    });
+                },
+
+                error: function () {
+                    $("#updatesContainer").html("<p class='empty-msg' style='color:red;'>Oops! Could not load management action updates right now.</p>");
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
