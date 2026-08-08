@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Management Action Updates</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: auto;
+        }
+
+        .update-card {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #f9f9f9;
+        }
+
+        .update-title {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+
+        .update-status {
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        .update-date {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 6px;
+        }
+
+        .empty-msg {
+            font-style: italic;
+            color: #666;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Management Action Updates</h2>
+
+    <p>
+        View recent updates from management about workplace concerns and actions being taken.
+    </p>
+
+    <hr>
+
+    <div id="updatesContainer">
+        <p class="empty-msg">No management action updates have been posted yet.</p>
+    </div>
+
+    <script type="text/javascript">
+
+        function displayActionUpdates(updates) {
+            const container = document.getElementById("updatesContainer");
+            container.innerHTML = "";
+
+            if (!updates || updates.length === 0) {
+                container.innerHTML =
+                    "<p class='empty-msg'>No management action updates have been posted yet.</p>";
+                return;
+            }
+
+            updates.sort(function (a, b) {
+                return new Date(b.date) - new Date(a.date);
+            });
+
+            updates.forEach(function (update) {
+                const card = document.createElement("div");
+                card.className = "update-card";
+
+                card.innerHTML = `
+                    <div class="update-title">${update.title}</div>
+                    <p>${update.description}</p>
+                    <div class="update-status">Status: ${update.status}</div>
+                    <div class="update-date">Date: ${update.date}</div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        // US-14 will connect to the shared US-13 action-update service once
+        // the table, field names, and retrieval method are confirmed.
+        displayActionUpdates([]);
+
+    </script>
+
+</body>
+</html>
