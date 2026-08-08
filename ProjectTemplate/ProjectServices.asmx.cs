@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -9,66 +9,64 @@ using System.Data;
 
 namespace ProjectTemplate
 {
-	[WebService(Namespace = "http://tempuri.org/")]
-	[WebServiceBinding(ConformsTo = WsiProfiles.BasicProfile1_1)]
-	[System.ComponentModel.ToolboxItem(false)]
-	[System.Web.Script.Services.ScriptService]
+    [WebService(Namespace = "http://tempuri.org/")]
+    [WebServiceBinding(ConformsTo = WsiProfiles.BasicProfile1_1)]
+    [System.ComponentModel.ToolboxItem(false)]
+    [System.Web.Script.Services.ScriptService]
+    public class ProjectServices : System.Web.Services.WebService
+    {
+        ////////////////////////////////////////////////////////////////////////
+        ///replace the values of these variables with your database credentials
+        ////////////////////////////////////////////////////////////////////////
+        private string dbID = "cis440sum26team3";
+        private string dbPass = "cis440sum26team3";
+        private string dbName = "cis440sum26team3";
+        ////////////////////////////////////////////////////////////////////////
 
-	public class ProjectServices : System.Web.Services.WebService
-	{
-		////////////////////////////////////////////////////////////////////////
-		///replace the values of these variables with your database credentials
-		////////////////////////////////////////////////////////////////////////
-		private string dbID = "cis440sum26team3";
-		private string dbPass = "cis440sum26team3";
-		private string dbName = "cis440sum26team3";
-		////////////////////////////////////////////////////////////////////////
-		
-		////////////////////////////////////////////////////////////////////////
-		///call this method anywhere that you need the connection string!
-		////////////////////////////////////////////////////////////////////////
-		private string getConString() {
-			return "SERVER=107.180.1.16; PORT=3306; DATABASE=" + dbName+"; UID=" + dbID + "; PASSWORD=" + dbPass;
-		}
-		////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////
+        ///call this method anywhere that you need the connection string!
+        ////////////////////////////////////////////////////////////////////////
+        private string getConString()
+        {
+            return "SERVER=107.180.1.16; PORT=3306; DATABASE=" + dbName + "; UID=" + dbID + "; PASSWORD=" + dbPass;
+        }
+        ////////////////////////////////////////////////////////////////////////
 
+        /////////////////////////////////////////////////////////////////////////
+        //don't forget to include this decoration above each method that you want
+        //to be exposed as a web service!
+        [WebMethod(EnableSession = true)]
+        /////////////////////////////////////////////////////////////////////////
+        public string TestConnection()
+        {
+            try
+            {
+                string testQuery = "select * from test";
 
+                ////////////////////////////////////////////////////////////////////////
+                ///here's an example of using the getConString method!
+                ////////////////////////////////////////////////////////////////////////
+                MySqlConnection con = new MySqlConnection(getConString());
+                ////////////////////////////////////////////////////////////////////////
 
-		/////////////////////////////////////////////////////////////////////////
-		//don't forget to include this decoration above each method that you want
-		//to be exposed as a web service!
-		
-		[WebMethod(EnableSession = true)]
-		/////////////////////////////////////////////////////////////////////////
-		public string TestConnection()
-		{
-			try
-			{
-				string testQuery = "select * from test";
+                MySqlCommand cmd = new MySqlCommand(testQuery, con);
+                MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
+                DataTable table = new DataTable();
+                adapter.Fill(table);
+                return "Success!";
+            }
+            catch (Exception e)
+            {
+                return "Something went wrong, please check your credentials and db name and try again.  Error: " + e.Message;
+            }
+        }
 
-				////////////////////////////////////////////////////////////////////////
-				///here's an example of using the getConString method!
-				////////////////////////////////////////////////////////////////////////
-				MySqlConnection con = new MySqlConnection(getConString());
-				////////////////////////////////////////////////////////////////////////
-
-				MySqlCommand cmd = new MySqlCommand(testQuery, con);
-				MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
-				DataTable table = new DataTable();
-				adapter.Fill(table);
-				return "Success!";
-			}
-			catch (Exception e)
-			{
-				return "Something went wrong, please check your credentials and db name and try again.  Error: "+e.Message;
-			}
-		}
         [WebMethod(EnableSession = true)]
         public MoodCheckInResult SubmitMoodCheckIn(
-    string mood,
-    string workplaceFactor,
-    string causeText,
-    string recommendationText)
+            string mood,
+            string workplaceFactor,
+            string causeText,
+            string recommendationText)
         {
             mood = (mood ?? string.Empty).Trim();
             workplaceFactor = (workplaceFactor ?? string.Empty).Trim();
@@ -88,10 +86,10 @@ namespace ProjectTemplate
             }
 
             const string query = @"
-        INSERT INTO mood_checkins
-            (mood, workplace_factor, cause_text, recommendation_text)
-        VALUES
-            (@mood, @workplaceFactor, @causeText, @recommendationText);";
+                INSERT INTO mood_checkins
+                    (mood, workplace_factor, cause_text, recommendation_text)
+                VALUES
+                    (@mood, @workplaceFactor, @causeText, @recommendationText);";
 
             try
             {
@@ -99,11 +97,9 @@ namespace ProjectTemplate
                 using (MySqlCommand cmd = new MySqlCommand(query, con))
                 {
                     cmd.Parameters.Add("@mood", MySqlDbType.VarChar, 20).Value = mood;
-                    cmd.Parameters.Add("@workplaceFactor", MySqlDbType.VarChar, 50).Value =
-                        workplaceFactor;
+                    cmd.Parameters.Add("@workplaceFactor", MySqlDbType.VarChar, 50).Value = workplaceFactor;
                     cmd.Parameters.Add("@causeText", MySqlDbType.Text).Value = causeText;
-                    cmd.Parameters.Add("@recommendationText", MySqlDbType.Text).Value =
-                        recommendationText;
+                    cmd.Parameters.Add("@recommendationText", MySqlDbType.Text).Value = recommendationText;
 
                     con.Open();
 
@@ -134,52 +130,55 @@ namespace ProjectTemplate
                 };
             }
         }
-		[WebMethod(EnableSession = true)]
-public ManagerLoginResult LoginManager(string username, string password)
-{
-    username = (username ?? string.Empty).Trim();
-    password = (password ?? string.Empty).Trim();
 
-    if (username == "admin" && password == "admin")
-    {
-        Session["IsManager"] = "true";
-
-        return new ManagerLoginResult
+        [WebMethod(EnableSession = true)]
+        public ManagerLoginResult LoginManager(string username, string password)
         {
-            Success = true,
-            Message = "Login successful."
-        };
-    }
+            username = (username ?? string.Empty).Trim();
+            password = (password ?? string.Empty).Trim();
 
-    Session.Remove("IsManager");
+            if (username == "admin" && password == "admin")
+            {
+                Session["IsManager"] = "true";
 
-    return new ManagerLoginResult
-    {
-        Success = false,
-        Message = "Invalid or blank credentials."
-    };
-}
+                return new ManagerLoginResult
+                {
+                    Success = true,
+                    Message = "Login successful."
+                };
+            }
 
-[WebMethod(EnableSession = true)]
-public ManagerLoginResult LogoutManager()
-{
-    Session.Remove("IsManager");
+            Session.Remove("IsManager");
 
-    return new ManagerLoginResult
-    {
-        Success = true,
-        Message = "Logged out successfully."
-    };
-}
+            return new ManagerLoginResult
+            {
+                Success = false,
+                Message = "Invalid or blank credentials."
+            };
+        }
+
+        [WebMethod(EnableSession = true)]
+        public ManagerLoginResult LogoutManager()
+        {
+            Session.Remove("IsManager");
+
+            return new ManagerLoginResult
+            {
+                Success = true,
+                Message = "Logged out successfully."
+            };
+        }
+
         [WebMethod(EnableSession = true)]
         public List<CheckInRecord> GetRecentCheckIns()
         {
             List<CheckInRecord> checkIns = new List<CheckInRecord>();
-			if (Session["IsManager"] == null ||
-    !Session["IsManager"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
-{
-    return checkIns;
-}
+
+            if (Session["IsManager"] == null ||
+                !Session["IsManager"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
+            {
+                return checkIns;
+            }
 
             // Querying the database and ordering by ID descending so the newest check-ins appear first
             string query = "SELECT * FROM mood_checkins ORDER BY checkin_id DESC;";
@@ -190,6 +189,7 @@ public ManagerLoginResult LogoutManager()
                 using (MySqlCommand cmd = new MySqlCommand(query, con))
                 {
                     con.Open();
+
                     using (MySqlDataReader reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())
@@ -215,12 +215,66 @@ public ManagerLoginResult LogoutManager()
 
             return checkIns;
         }
+
+        [WebMethod(EnableSession = true)]
+        public List<ActionUpdateRecord> GetManagementActionUpdates()
+        {
+            List<ActionUpdateRecord> updates = new List<ActionUpdateRecord>();
+
+            string query = @"
+                SELECT 
+                    title,
+                    description,
+                    status,
+                    COALESCE(updated_at, created_at) AS update_date
+                FROM management_action_updates
+                ORDER BY update_date DESC;";
+
+            try
+            {
+                using (MySqlConnection con = new MySqlConnection(getConString()))
+                using (MySqlCommand cmd = new MySqlCommand(query, con))
+                {
+                    con.Open();
+
+                    using (MySqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            updates.Add(new ActionUpdateRecord
+                            {
+                                Title = reader["title"].ToString(),
+                                Description = reader["description"].ToString(),
+                                Status = reader["status"].ToString(),
+                                UpdateDate = Convert.ToDateTime(reader["update_date"]).ToString("MMMM dd, yyyy")
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+            return updates;
+        }
     }
-public class ManagerLoginResult
-{
-    public bool Success { get; set; }
-    public string Message { get; set; }
-}
+
+    public class ManagerLoginResult
+    {
+        public bool Success { get; set; }
+        public string Message { get; set; }
+    }
+
+    public class ActionUpdateRecord
+    {
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public string Status { get; set; }
+        public string UpdateDate { get; set; }
+    }
+
     // This class organizes the data before sending it securely to the frontend
     public class CheckInRecord
     {
