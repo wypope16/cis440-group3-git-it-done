@@ -4,6 +4,8 @@
     <meta charset="utf-8" />
     <title>Management Action Updates</title>
 
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -24,6 +26,10 @@
             font-weight: bold;
             font-size: 1.1em;
             margin-bottom: 8px;
+        }
+
+        .update-description {
+            margin: 8px 0;
         }
 
         .update-status {
@@ -56,44 +62,48 @@
     <hr>
 
     <div id="updatesContainer">
-        <p class="empty-msg">No management action updates have been posted yet.</p>
+        <p class="empty-msg">Loading management action updates...</p>
     </div>
 
     <script type="text/javascript">
+        $(document).ready(function () {
+            $.ajax({
+                type: "POST",
+                url: "ProjectServices.asmx/GetManagementActionUpdates",
+                data: "{}",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
 
-        function displayActionUpdates(updates) {
-            const container = document.getElementById("updatesContainer");
-            container.innerHTML = "";
+                success: function (msg) {
+                    const updates = msg.d;
+                    const container = $("#updatesContainer");
 
-            if (!updates || updates.length === 0) {
-                container.innerHTML =
-                    "<p class='empty-msg'>No management action updates have been posted yet.</p>";
-                return;
-            }
+                    container.empty();
 
-            updates.sort(function (a, b) {
-                return new Date(b.date) - new Date(a.date);
+                    if (!updates || updates.length === 0) {
+                        container.html("<p class='empty-msg'>No management action updates have been posted yet.</p>");
+                        return;
+                    }
+
+                    updates.forEach(function (update) {
+                        const card = `
+                            <div class="update-card">
+                                <div class="update-title">${update.Title}</div>
+                                <p class="update-description">${update.Description}</p>
+                                <div class="update-status">Status: ${update.Status}</div>
+                                <div class="update-date">Date: ${update.UpdateDate}</div>
+                            </div>
+                        `;
+
+                        container.append(card);
+                    });
+                },
+
+                error: function () {
+                    $("#updatesContainer").html("<p class='empty-msg' style='color:red;'>Oops! Could not load management action updates right now.</p>");
+                }
             });
-
-            updates.forEach(function (update) {
-                const card = document.createElement("div");
-                card.className = "update-card";
-
-                card.innerHTML = `
-                    <div class="update-title">${update.title}</div>
-                    <p>${update.description}</p>
-                    <div class="update-status">Status: ${update.status}</div>
-                    <div class="update-date">Date: ${update.date}</div>
-                `;
-
-                container.appendChild(card);
-            });
-        }
-
-        // US-14 will connect to the shared US-13 action-update service once
-        // the table, field names, and retrieval method are confirmed.
-        displayActionUpdates([]);
-
+        });
     </script>
 
 </body>
