@@ -3,129 +3,235 @@
 <head>
     <meta charset="utf-8" />
     <title>Manager Dashboard - Recent Check-ins</title>
-
-    <!-- DO NOT FORGET THIS SCRIPT TAG SO YOU CAN USE JQUERY! -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            max-width: 800px;
-            margin: auto;
-        }
-
-        .checkin-card {
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-            background: #f9f9f9;
-        }
-
-        .checkin-header {
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #333;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 5px;
-        }
-
-        .checkin-body p {
-            margin: 8px 0;
-        }
-
-        .empty-msg {
-            font-style: italic;
-            color: #666;
-            font-size: 1.1em;
-        }
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+        .logout-btn { float: right; padding: 8px 15px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 15px; }
+        
+        .checkin-card { border: 1px solid #ccc; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: #f9f9f9; }
+        .checkin-header { font-weight: bold; margin-bottom: 10px; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        .checkin-body p { margin: 8px 0; }
+        .empty-msg { font-style: italic; color: #666; font-size: 1.1em; }
+        
+        /* US-10 Summary Styles */
+        .summary-container { display: flex; gap: 20px; margin-bottom: 30px; }
+        .summary-box { flex: 1; border: 1px solid #0056b3; border-radius: 8px; padding: 15px; background: #e6f2ff; }
+        .summary-box h3 { margin-top: 0; color: #0056b3; border-bottom: 1px solid #0056b3; padding-bottom: 5px; }
+        .summary-list { list-style-type: none; padding: 0; margin: 0; }
+        .summary-list li { padding: 5px 0; border-bottom: 1px dashed #ccc; display: flex; justify-content: space-between; }
+        
+        /* US-11 Filter Styles */
+        .filter-section { background: #e6f2ff; border: 1px solid #0056b3; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
+        .filter-section h3 { margin-top: 0; color: #0056b3; }
+        .filter-row { display: flex; gap: 15px; margin-bottom: 10px; flex-wrap: wrap; }
+        .filter-group { display: flex; flex-direction: column; }
+        .filter-group label { font-size: 0.9em; font-weight: bold; margin-bottom: 4px; }
+        .filter-group select, .filter-group input { padding: 5px; border-radius: 4px; border: 1px solid #ccc; }
+        .filter-actions { margin-top: 10px; }
+        .filter-actions button { padding: 6px 12px; cursor: pointer; border-radius: 4px; border: none; }
+        .btn-apply { background: #0056b3; color: white; margin-right: 10px; }
+        .btn-clear { background: #6c757d; color: white; }
     </style>
 </head>
-
 <body>
-
-    <h2>Recent Anonymous Check-ins</h2>
-
-    <button type="button" onclick="logoutManager()">Logout</button>
-
+    <button class="logout-btn" type="button" onclick="logoutManager()">Logout</button>
+    <h2>Manager Dashboard</h2>
     <hr>
 
-    <!-- This is where the jQuery will inject the check-in cards -->
+    <!-- US-10: Summary Container -->
+    <div class="summary-container" id="summaryContainer" style="display: none;">
+        <div class="summary-box">
+            <h3>Moods Summary</h3>
+            <ul class="summary-list" id="moodSummaryList"></ul>
+        </div>
+        <div class="summary-box">
+            <h3>Workplace Factors</h3>
+            <ul class="summary-list" id="factorSummaryList"></ul>
+        </div>
+    </div>
+
+    <!-- US-11: Filter Menu -->
+    <div class="filter-section">
+        <h3>Filter Feedback</h3>
+        <div class="filter-row">
+            <div class="filter-group">
+                <label>Mood</label>
+                <select id="filterMood">
+                    <option value="">All Moods</option>
+                    <option value="Good">Good</option>
+                    <option value="Neutral">Neutral</option>
+                    <option value="Stressed">Stressed</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Workplace Factor</label>
+                <select id="filterFactor">
+                    <option value="">All Factors</option>
+                    <option value="Workload">Workload</option>
+                    <option value="Team Relationships">Team Relationships</option>
+                    <option value="Technology">Technology</option>
+                    <option value="Management">Management</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Start Date</label>
+                <input type="date" id="filterStartDate">
+            </div>
+            <div class="filter-group">
+                <label>End Date</label>
+                <input type="date" id="filterEndDate">
+            </div>
+        </div>
+        <div class="filter-actions">
+            <button class="btn-apply" onclick="applyFilters()">Apply Filters</button>
+            <button class="btn-clear" onclick="clearFilters()">Clear Filters</button>
+        </div>
+    </div>
+
+    <h3>Recent Anonymous Check-ins</h3>
+    
+    <!-- US-09: Container for the Check-in Cards -->
     <div id="checkinContainer">
         <p>Loading recent check-ins...</p>
     </div>
 
     <script type="text/javascript">
+        // US-11 Data Storage Variable
+        let allCheckIns = [];
 
         function logoutManager() {
-    $.ajax({
-        type: "POST",
-        url: "ProjectServices.asmx/LogoutManager",
-        data: "{}",
-        contentType: "application/json; charset=utf-8",
-        dataType: "json",
-
-        complete: function () {
-            sessionStorage.removeItem("isManager");
-            window.location.href = "manager-login.html";
+            $.ajax({
+                type: "POST",
+                url: "ProjectServices.asmx/LogoutManager",
+                data: "{}",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                complete: function () {
+                    sessionStorage.removeItem("isManager");
+                    window.location.href = "manager-login.html";
+                }
+            });
         }
-    });
-}
+
+        // US-11 UI Renderer
+        function renderCheckIns(dataToRender) {
+            const container = $("#checkinContainer");
+            container.empty();
+
+            if (dataToRender.length === 0) {
+                container.append("<p class='empty-msg'>No anonymous check-ins match the criteria.</p>");
+                return;
+            }
+
+            dataToRender.forEach(function (record) {
+                const card = `
+                    <div class="checkin-card">
+                        <div class="checkin-header">
+                            Date: ${record.SubmissionDate} | Mood: ${record.Mood} | Factor: ${record.WorkplaceFactor}
+                        </div>
+                        <div class="checkin-body">
+                            <p><strong>Cause:</strong> ${record.CauseText}</p>
+                            <p><strong>Recommendation:</strong> ${record.RecommendationText}</p>
+                        </div>
+                    </div>
+                `;
+                container.append(card);
+            });
+        }
+
+        // US-11 Filter Logic
+        function applyFilters() {
+            const mood = $("#filterMood").val();
+            const factor = $("#filterFactor").val();
+            const startDate = $("#filterStartDate").val();
+            const endDate = $("#filterEndDate").val();
+
+            const filteredData = allCheckIns.filter(record => {
+                let isMatch = true;
+                
+                if (mood !== "" && record.Mood !== mood) isMatch = false;
+                if (factor !== "" && record.WorkplaceFactor !== factor) isMatch = false;
+
+                if (startDate || endDate) {
+                    const recordDate = new Date(record.SubmissionDate);
+                    if (startDate) {
+                        const start = new Date(startDate + "T00:00:00");
+                        if (recordDate < start) isMatch = false;
+                    }
+                    if (endDate) {
+                        const end = new Date(endDate + "T23:59:59");
+                        if (recordDate > end) isMatch = false;
+                    }
+                }
+                return isMatch;
+            });
+            renderCheckIns(filteredData);
+        }
+
+        function clearFilters() {
+            $("#filterMood").val("");
+            $("#filterFactor").val("");
+            $("#filterStartDate").val("");
+            $("#filterEndDate").val("");
+            renderCheckIns(allCheckIns);
+        }
 
         $(document).ready(function () {
-
+            // US-08 Security Redirect
             if (sessionStorage.getItem("isManager") !== "true") {
                 window.location.href = "manager-login.html";
                 return;
             }
 
-            // Fetch the data as soon as the page loads
+            // US-10: Fetch and Render Summary Totals
+            $.ajax({
+                type: "POST",
+                url: "ProjectServices.asmx/GetDashboardSummary",
+                data: "{}",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (msg) {
+                    const summary = msg.d;
+                    if (summary) {
+                        $("#summaryContainer").show();
+                        
+                        const moodList = $("#moodSummaryList");
+                        if (summary.Moods.length === 0) {
+                            moodList.append("<li><span class='empty-msg'>No mood data</span></li>");
+                        } else {
+                            summary.Moods.forEach(m => {
+                                moodList.append(`<li><span>${m.Mood}</span> <strong>${m.Count}</strong></li>`);
+                            });
+                        }
+
+                        const factorList = $("#factorSummaryList");
+                        if (summary.Factors.length === 0) {
+                            factorList.append("<li><span class='empty-msg'>No factor data</span></li>");
+                        } else {
+                            summary.Factors.forEach(f => {
+                                factorList.append(`<li><span>${f.Factor}</span> <strong>${f.Count}</strong></li>`);
+                            });
+                        }
+                    }
+                }
+            });
+
+            // Fetch Check-ins
             $.ajax({
                 type: "POST",
                 url: "ProjectServices.asmx/GetRecentCheckIns",
                 data: "{}",
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
-
                 success: function (msg) {
-                    const checkIns = msg.d;
-                    const container = $("#checkinContainer");
-
-                    // Clear out the "Loading..." text
-                    container.empty();
-
-                    // US-09 Requirement: Show a clear message when no check-ins exist
-                    if (checkIns.length === 0) {
-                        container.append("<p class='empty-msg'>No anonymous check-ins have been recorded yet.</p>");
-                        return;
-                    }
-
-                    // Loop through the data and create a visual card for each check-in
-                    checkIns.forEach(function (record) {
-                        const card = `
-                            <div class="checkin-card">
-                                <div class="checkin-header">
-                                    Date: ${record.SubmissionDate} | Mood: ${record.Mood} | Factor: ${record.WorkplaceFactor}
-                                </div>
-                                <div class="checkin-body">
-                                    <p><strong>Cause:</strong> ${record.CauseText}</p>
-                                    <p><strong>Recommendation:</strong> ${record.RecommendationText}</p>
-                                </div>
-                            </div>
-                        `;
-                        container.append(card);
-                    });
+                    allCheckIns = msg.d; 
+                    renderCheckIns(allCheckIns); // Render for US-11
                 },
-
                 error: function () {
-                    // Error message if the database is offline
                     $("#checkinContainer").html("<p class='empty-msg' style='color:red;'>Oops! Error loading check-ins. Please check the database connection.</p>");
                 }
             });
         });
-
     </script>
-
 </body>
 </html>
