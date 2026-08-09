@@ -222,7 +222,8 @@ namespace ProjectTemplate
             List<ActionUpdateRecord> updates = new List<ActionUpdateRecord>();
 
             string query = @"
-                SELECT 
+                SELECT
+                action_update_id,
                     title,
                     description,
                     status,
@@ -243,6 +244,7 @@ namespace ProjectTemplate
                         {
                             updates.Add(new ActionUpdateRecord
                             {
+                            ActionUpdateId = Convert.ToInt32(reader["action_update_id"]),
                                 Title = reader["title"].ToString(),
                                 Description = reader["description"].ToString(),
                                 Status = reader["status"].ToString(),
@@ -269,6 +271,7 @@ namespace ProjectTemplate
 
     public class ActionUpdateRecord
     {
+        public int ActionUpdateId { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
         public string Status { get; set; }
