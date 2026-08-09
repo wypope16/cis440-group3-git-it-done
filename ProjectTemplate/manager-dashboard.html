@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>Manager Dashboard - Recent Check-ins</title>
+    <title>Manager Dashboard</title>
 
-    <!-- DO NOT FORGET THIS SCRIPT TAG SO YOU CAN USE JQUERY! -->
+    <!-- jQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
     <style>
@@ -15,7 +15,8 @@
             margin: auto;
         }
 
-        .checkin-card {
+        .checkin-card,
+        .action-update-card {
             border: 1px solid #ccc;
             border-radius: 8px;
             padding: 15px;
@@ -23,7 +24,8 @@
             background: #f9f9f9;
         }
 
-        .checkin-header {
+        .checkin-header,
+        .action-update-header {
             font-weight: bold;
             margin-bottom: 10px;
             color: #333;
@@ -31,7 +33,8 @@
             padding-bottom: 5px;
         }
 
-        .checkin-body p {
+        .checkin-body p,
+        .action-update-body p {
             margin: 8px 0;
         }
 
@@ -40,87 +43,630 @@
             color: #666;
             font-size: 1.1em;
         }
+
+        /* US-13 manager action-update form */
+        #managementActionSection {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            background: #fafafa;
+        }
+
+        #actionTitle,
+        #actionDescription,
+        #actionStatus {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 8px;
+            margin-top: 5px;
+        }
+
+        #actionDescription {
+            resize: vertical;
+        }
+
+        #postActionUpdateBtn {
+            padding: 10px 16px;
+            cursor: pointer;
+        }
+
+        #actionValidationMessage {
+            color: #b00020;
+            font-weight: bold;
+            display: none;
+        }
+
+        #actionUpdateMessage {
+            margin-top: 12px;
+            font-weight: bold;
+        }
+
+        .status-label {
+            font-weight: bold;
+        }
     </style>
 </head>
 
 <body>
 
-    <h2>Recent Anonymous Check-ins</h2>
+    <h1>Manager Dashboard</h1>
 
-    <button type="button" onclick="logoutManager()">Logout</button>
+    <button type="button" onclick="logoutManager()">
+        Logout
+    </button>
 
     <hr>
 
-    <!-- This is where the jQuery will inject the check-in cards -->
-    <div id="checkinContainer">
+    <!-- =========================================================
+         US-13: MANAGER ACTION UPDATE SECTION
+         ========================================================= -->
+    <section id="managementActionSection">
+
+        <h2>Post Management Action Update</h2>
+
+        <p>
+            Post an update so employees can see how workplace concerns
+            are being reviewed or addressed.
+        </p>
+
+        <form id="actionUpdateForm" novalidate>
+
+            <div>
+                <label for="actionTitle">
+                    <strong>Update Title</strong>
+                </label>
+
+                <br>
+
+                <input type="text"
+                       id="actionTitle"
+                       name="actionTitle"
+                       maxlength="150"
+                       required
+                       aria-required="true">
+            </div>
+
+            <br>
+
+            <div>
+                <label for="actionDescription">
+                    <strong>Description</strong>
+                </label>
+
+                <br>
+
+                <textarea id="actionDescription"
+                          name="actionDescription"
+                          rows="5"
+                          required
+                          aria-required="true"></textarea>
+            </div>
+
+            <br>
+
+            <div>
+                <label for="actionStatus">
+                    <strong>Status</strong>
+                </label>
+
+                <br>
+
+                <select id="actionStatus"
+                        name="actionStatus"
+                        required
+                        aria-required="true">
+
+                    <option value="">-- Select a status --</option>
+                    <option value="Concern Received">
+                        Concern Received
+                    </option>
+                    <option value="Under Review">
+                        Under Review
+                    </option>
+                    <option value="Improvement Planned">
+                        Improvement Planned
+                    </option>
+                    <option value="Action Completed">
+                        Action Completed
+                    </option>
+
+                </select>
+            </div>
+
+            <br>
+
+            <p id="actionValidationMessage"
+               role="alert">
+                Please complete the title, description, and status.
+            </p>
+
+            <button type="submit"
+                    id="postActionUpdateBtn">
+                Post Update
+            </button>
+
+        </form>
+
+        <p id="actionUpdateMessage"
+           role="status"
+           aria-live="polite">
+        </p>
+
+    </section>
+
+    <!-- =========================================================
+         SHARED US-13 / US-14 MANAGEMENT ACTION UPDATE DISPLAY
+         GetManagementActionUpdates() is being supplied by US-14.
+         ========================================================= -->
+
+    <h2>Posted Management Action Updates</h2>
+
+    <div id="managementActionUpdateContainer">
+        <p>Loading management action updates...</p>
+    </div>
+
+    <hr>
+
+    <!-- =========================================================
+         EXISTING MANAGER DASHBOARD FUNCTIONALITY
+         Do not remove this.
+         ========================================================= -->
+
+    <h2>Recent Anonymous Check-ins</h2>
+
+    <!-- Existing check-in cards are inserted here -->
+    <div id="checkInContainer">
         <p>Loading recent check-ins...</p>
     </div>
 
+
     <script type="text/javascript">
 
+        /* =========================================================
+           EXISTING MANAGER LOGOUT
+           ========================================================= */
+
         function logoutManager() {
-    $.ajax({
-        type: "POST",
-        url: "ProjectServices.asmx/LogoutManager",
-        data: "{}",
-        contentType: "application/json; charset=utf-8",
-        dataType: "json",
 
-        complete: function () {
-            sessionStorage.removeItem("isManager");
-            window.location.href = "manager-login.html";
-        }
-    });
-}
-
-        $(document).ready(function () {
-
-            if (sessionStorage.getItem("isManager") !== "true") {
-                window.location.href = "manager-login.html";
-                return;
-            }
-
-            // Fetch the data as soon as the page loads
             $.ajax({
                 type: "POST",
-                url: "ProjectServices.asmx/GetRecentCheckIns",
+                url: "ProjectServices.asmx/LogoutManager",
                 data: "{}",
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
 
-                success: function (msg) {
-                    const checkIns = msg.d;
-                    const container = $("#checkinContainer");
+                complete: function () {
 
-                    // Clear out the "Loading..." text
+                    sessionStorage.removeItem("isManager");
+
+                    window.location.href = "manager-login.html";
+                }
+            });
+        }
+
+
+        /* =========================================================
+           US-13 HELPER:
+           Safely display database text in HTML.
+           ========================================================= */
+
+        function escapeHtml(value) {
+
+            if (value === null || value === undefined) {
+                return "";
+            }
+
+            return $("<div>")
+                .text(value)
+                .html();
+        }
+
+
+        /* =========================================================
+           US-13 REQUIRED-FIELD VALIDATION
+           ========================================================= */
+
+        function validateActionUpdate() {
+
+            const title =
+                $("#actionTitle").val().trim();
+
+            const description =
+                $("#actionDescription").val().trim();
+
+            const status =
+                $("#actionStatus").val();
+
+
+            if (
+                title === "" ||
+                description === "" ||
+                status === ""
+            ) {
+
+                $("#actionValidationMessage").show();
+
+                return false;
+            }
+
+
+            $("#actionValidationMessage").hide();
+
+            return true;
+        }
+
+
+        /* =========================================================
+           US-13 POST A NEW ACTION UPDATE
+           This calls the manager-side WebMethod that we will add
+           to ProjectServices.asmx.cs.
+           ========================================================= */
+
+        function postManagementActionUpdate() {
+
+            if (!validateActionUpdate()) {
+                return;
+            }
+
+
+            const title =
+                $("#actionTitle").val().trim();
+
+            const description =
+                $("#actionDescription").val().trim();
+
+            const status =
+                $("#actionStatus").val();
+
+
+            const parameters = JSON.stringify({
+                title: title,
+                description: description,
+                status: status
+            });
+
+
+            $("#postActionUpdateBtn")
+                .prop("disabled", true)
+                .text("Posting...");
+
+            $("#actionUpdateMessage")
+                .text("")
+                .css("color", "");
+
+
+            $.ajax({
+
+                type: "POST",
+
+                url:
+                    "ProjectServices.asmx/PostManagementActionUpdate",
+
+                data: parameters,
+
+                contentType:
+                    "application/json; charset=utf-8",
+
+                dataType: "json",
+
+
+                success: function (msg) {
+
+                    if (msg.d === true) {
+
+                        $("#actionUpdateMessage")
+                            .text(
+                                "Management action update posted successfully."
+                            )
+                            .css("color", "green");
+
+
+                        $("#actionUpdateForm")[0].reset();
+
+                        $("#actionValidationMessage").hide();
+
+
+                        /*
+                         Reload the shared list so the manager
+                         immediately sees the newly saved update.
+                        */
+                        loadManagementActionUpdates();
+                    }
+                    else {
+
+                        $("#actionUpdateMessage")
+                            .text(
+                                "The action update could not be posted."
+                            )
+                            .css("color", "red");
+                    }
+                },
+
+
+                error: function () {
+
+                    $("#actionUpdateMessage")
+                        .text(
+                            "An error occurred while posting the action update."
+                        )
+                        .css("color", "red");
+                },
+
+
+                complete: function () {
+
+                    $("#postActionUpdateBtn")
+                        .prop("disabled", false)
+                        .text("Post Update");
+                }
+            });
+        }
+
+
+        /* =========================================================
+           SHARED READ FUNCTION
+
+           Ramey's US-14 PR provides:
+           GetManagementActionUpdates()
+
+           We reuse it. We do NOT create another read WebMethod.
+           ========================================================= */
+
+        function loadManagementActionUpdates() {
+
+            const container =
+                $("#managementActionUpdateContainer");
+
+
+            container.html(
+                "<p>Loading management action updates...</p>"
+            );
+
+
+            $.ajax({
+
+                type: "POST",
+
+                url:
+                    "ProjectServices.asmx/GetManagementActionUpdates",
+
+                data: "{}",
+
+                contentType:
+                    "application/json; charset=utf-8",
+
+                dataType: "json",
+
+
+                success: function (msg) {
+
+                    const updates = msg.d;
+
                     container.empty();
 
-                    // US-09 Requirement: Show a clear message when no check-ins exist
-                    if (checkIns.length === 0) {
-                        container.append("<p class='empty-msg'>No anonymous check-ins have been recorded yet.</p>");
+
+                    if (
+                        !updates ||
+                        updates.length === 0
+                    ) {
+
+                        container.append(
+                            "<p class='empty-msg'>" +
+                            "No management action updates " +
+                            "have been posted yet." +
+                            "</p>"
+                        );
+
                         return;
                     }
 
-                    // Loop through the data and create a visual card for each check-in
-                    checkIns.forEach(function (record) {
+
+                    updates.forEach(function (record) {
+
+                        const title =
+                            escapeHtml(record.Title);
+
+                        const description =
+                            escapeHtml(record.Description);
+
+                        const status =
+                            escapeHtml(record.Status);
+
+                        const updateDate =
+                            escapeHtml(record.UpdateDate);
+
+
                         const card = `
-                            <div class="checkin-card">
-                                <div class="checkin-header">
-                                    Date: ${record.SubmissionDate} | Mood: ${record.Mood} | Factor: ${record.WorkplaceFactor}
+                                <div class="action-update-card">
+
+                                    <div class="action-update-header">
+                                        ${title}
+                                    </div>
+
+                                    <div class="action-update-body">
+
+                                        <p>
+                                            <strong>Description:</strong>
+                                            ${description}
+                                        </p>
+
+                                        <p>
+                                            <strong>Current Status:</strong>
+                                            ${status}
+                                        </p>
+
+                                        <p>
+                                            <strong>Update Date:</strong>
+                                            ${updateDate}
+                                        </p>
+
+                                    </div>
+
                                 </div>
-                                <div class="checkin-body">
-                                    <p><strong>Cause:</strong> ${record.CauseText}</p>
-                                    <p><strong>Recommendation:</strong> ${record.RecommendationText}</p>
-                                </div>
-                            </div>
-                        `;
+                            `;
+
+
                         container.append(card);
                     });
                 },
 
+
                 error: function () {
-                    // Error message if the database is offline
-                    $("#checkinContainer").html("<p class='empty-msg' style='color:red;'>Oops! Error loading check-ins. Please check the database connection.</p>");
+
+                    container.html(
+                        "<p class='empty-msg' " +
+                        "style='color:red;'>" +
+                        "Unable to load management action updates." +
+                        "</p>"
+                    );
+                }
+            });
+        }
+
+
+        /* =========================================================
+           PAGE STARTUP
+           ========================================================= */
+
+        $(document).ready(function () {
+
+            /*
+             Existing manager-page protection.
+
+             If the browser does not show a manager session,
+             return to the manager login page.
+            */
+            if (
+                sessionStorage.getItem("isManager")
+                !== "true"
+            ) {
+
+                window.location.href =
+                    "manager-login.html";
+
+                return;
+            }
+
+
+            /* US-13 form submission */
+            $("#actionUpdateForm")
+                .on("submit", function (event) {
+
+                    event.preventDefault();
+
+                    postManagementActionUpdate();
+                });
+
+
+            /*
+             Shared US-13 / US-14 read method.
+
+             NOTE:
+             Until Ramey's US-14 PR is merged into your branch,
+             this request may fail. That does NOT mean this
+             manager-dashboard code is incorrect.
+            */
+            loadManagementActionUpdates();
+
+
+            /* =====================================================
+               EXISTING US-09 RECENT CHECK-IN RETRIEVAL
+               ===================================================== */
+
+            $.ajax({
+
+                type: "POST",
+
+                url:
+                    "ProjectServices.asmx/GetRecentCheckIns",
+
+                data: "{}",
+
+                contentType:
+                    "application/json; charset=utf-8",
+
+                dataType: "json",
+
+
+                success: function (msg) {
+
+                    const checkIns = msg.d;
+
+                    const container =
+                        $("#checkInContainer");
+
+
+                    // Clear the Loading text
+                    container.empty();
+
+
+                    // Existing US-09 no-check-ins requirement
+                    if (
+                        !checkIns ||
+                        checkIns.length === 0
+                    ) {
+
+                        container.append(
+                            "<p class='empty-msg'>" +
+                            "No anonymous check-ins " +
+                            "have been recorded yet." +
+                            "</p>"
+                        );
+
+                        return;
+                    }
+
+
+                    // Create a card for each existing check-in
+                    checkIns.forEach(function (record) {
+
+                        const card = `
+                                <div class="checkin-card">
+
+                                    <div class="checkin-header">
+                                        Date:
+                                        ${escapeHtml(record.SubmissionDate)}
+                                        |
+                                        Mood:
+                                        ${escapeHtml(record.Mood)}
+                                        |
+                                        Factor:
+                                        ${escapeHtml(record.WorkplaceFactor)}
+                                    </div>
+
+                                    <div class="checkin-body">
+
+                                        <p>
+                                            <strong>Cause:</strong>
+                                            ${escapeHtml(record.CauseText)}
+                                        </p>
+
+                                        <p>
+                                            <strong>Recommendation:</strong>
+                                            ${escapeHtml(record.RecommendationText)}
+                                        </p>
+
+                                    </div>
+
+                                </div>
+                            `;
+
+
+                        container.append(card);
+                    });
+                },
+
+
+                error: function () {
+
+                    $("#checkInContainer").html(
+                        "<p class='empty-msg' " +
+                        "style='color:red;'>" +
+                        "Oops! Error loading check-ins. " +
+                        "Please check the database connection." +
+                        "</p>"
+                    );
                 }
             });
         });
