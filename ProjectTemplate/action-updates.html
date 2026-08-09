@@ -14,6 +14,11 @@
             margin: auto;
         }
 
+        .nav-link {
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
         .update-card {
             border: 1px solid #ccc;
             border-radius: 8px;
@@ -48,15 +53,22 @@
             color: #666;
             font-size: 1.1em;
         }
+
+        .error-msg {
+            color: red;
+        }
     </style>
 </head>
 
 <body>
-
     <h2>Management Action Updates</h2>
 
     <p>
         View recent updates from management about workplace concerns and actions being taken.
+    </p>
+
+    <p>
+        <a class="nav-link" href="index.html">Back to mood check-in</a>
     </p>
 
     <hr>
@@ -67,6 +79,22 @@
 
     <script type="text/javascript">
         $(document).ready(function () {
+            const container = $("#updatesContainer");
+
+            function showMessage(message, isError) {
+                container.empty();
+
+                const messageElement = $("<p>")
+                    .addClass("empty-msg")
+                    .text(message);
+
+                if (isError) {
+                    messageElement.addClass("error-msg");
+                }
+
+                container.append(messageElement);
+            }
+
             $.ajax({
                 type: "POST",
                 url: "ProjectServices.asmx/GetManagementActionUpdates",
@@ -76,35 +104,42 @@
 
                 success: function (msg) {
                     const updates = msg.d;
-                    const container = $("#updatesContainer");
-
                     container.empty();
 
                     if (!updates || updates.length === 0) {
-                        container.html("<p class='empty-msg'>No management action updates have been posted yet.</p>");
+                        showMessage("No management action updates have been posted yet.", false);
                         return;
                     }
 
                     updates.forEach(function (update) {
-                        const card = `
-                            <div class="update-card">
-                                <div class="update-title">${update.Title}</div>
-                                <p class="update-description">${update.Description}</p>
-                                <div class="update-status">Status: ${update.Status}</div>
-                                <div class="update-date">Date: ${update.UpdateDate}</div>
-                            </div>
-                        `;
+                        const card = $("<div>").addClass("update-card");
 
+                        const title = $("<div>")
+                            .addClass("update-title")
+                            .text(update.Title || "");
+
+                        const description = $("<p>")
+                            .addClass("update-description")
+                            .text(update.Description || "");
+
+                        const status = $("<div>")
+                            .addClass("update-status")
+                            .text("Status: " + (update.Status || ""));
+
+                        const date = $("<div>")
+                            .addClass("update-date")
+                            .text("Date: " + (update.UpdateDate || ""));
+
+                        card.append(title, description, status, date);
                         container.append(card);
                     });
                 },
 
                 error: function () {
-                    $("#updatesContainer").html("<p class='empty-msg' style='color:red;'>Oops! Could not load management action updates right now.</p>");
+                    showMessage("Oops! Could not load management action updates right now.", true);
                 }
             });
         });
     </script>
-
 </body>
 </html>
