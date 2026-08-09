@@ -32,26 +32,13 @@ namespace ProjectTemplate
 		}
 		////////////////////////////////////////////////////////////////////////
 
-
-
-		/////////////////////////////////////////////////////////////////////////
-		//don't forget to include this decoration above each method that you want
-		//to be exposed as a web service!
-		
 		[WebMethod(EnableSession = true)]
-		/////////////////////////////////////////////////////////////////////////
 		public string TestConnection()
 		{
 			try
 			{
 				string testQuery = "select * from test";
-
-				////////////////////////////////////////////////////////////////////////
-				///here's an example of using the getConString method!
-				////////////////////////////////////////////////////////////////////////
 				MySqlConnection con = new MySqlConnection(getConString());
-				////////////////////////////////////////////////////////////////////////
-
 				MySqlCommand cmd = new MySqlCommand(testQuery, con);
 				MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
 				DataTable table = new DataTable();
@@ -63,12 +50,13 @@ namespace ProjectTemplate
 				return "Something went wrong, please check your credentials and db name and try again.  Error: "+e.Message;
 			}
 		}
+
         [WebMethod(EnableSession = true)]
         public MoodCheckInResult SubmitMoodCheckIn(
-    string mood,
-    string workplaceFactor,
-    string causeText,
-    string recommendationText)
+            string mood,
+            string workplaceFactor,
+            string causeText,
+            string recommendationText)
         {
             mood = (mood ?? string.Empty).Trim();
             workplaceFactor = (workplaceFactor ?? string.Empty).Trim();
@@ -134,54 +122,57 @@ namespace ProjectTemplate
                 };
             }
         }
+
 		[WebMethod(EnableSession = true)]
-public ManagerLoginResult LoginManager(string username, string password)
-{
-    username = (username ?? string.Empty).Trim();
-    password = (password ?? string.Empty).Trim();
-
-    if (username == "admin" && password == "admin")
-    {
-        Session["IsManager"] = "true";
-
-        return new ManagerLoginResult
+        public ManagerLoginResult LoginManager(string username, string password)
         {
-            Success = true,
-            Message = "Login successful."
-        };
-    }
+            username = (username ?? string.Empty).Trim();
+            password = (password ?? string.Empty).Trim();
 
-    Session.Remove("IsManager");
+            if (username == "admin" && password == "admin")
+            {
+                Session["IsManager"] = "true";
 
-    return new ManagerLoginResult
-    {
-        Success = false,
-        Message = "Invalid or blank credentials."
-    };
-}
+                return new ManagerLoginResult
+                {
+                    Success = true,
+                    Message = "Login successful."
+                };
+            }
 
-[WebMethod(EnableSession = true)]
-public ManagerLoginResult LogoutManager()
-{
-    Session.Remove("IsManager");
+            Session.Remove("IsManager");
 
-    return new ManagerLoginResult
-    {
-        Success = true,
-        Message = "Logged out successfully."
-    };
-}
+            return new ManagerLoginResult
+            {
+                Success = false,
+                Message = "Invalid or blank credentials."
+            };
+        }
+
+        [WebMethod(EnableSession = true)]
+        public ManagerLoginResult LogoutManager()
+        {
+            Session.Remove("IsManager");
+
+            return new ManagerLoginResult
+            {
+                Success = true,
+                Message = "Logged out successfully."
+            };
+        }
+
         [WebMethod(EnableSession = true)]
         public List<CheckInRecord> GetRecentCheckIns()
         {
             List<CheckInRecord> checkIns = new List<CheckInRecord>();
-			if (Session["IsManager"] == null ||
-    !Session["IsManager"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
-{
-    return checkIns;
-}
+			
+            if (Session["IsManager"] == null ||
+                !Session["IsManager"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
+            {
+                return checkIns;
+            }
 
-            // Querying the database and ordering by ID descending so the newest check-ins appear first
+            // Querying the database and ordering by checkin_id descending so the newest check-ins appear first
             string query = "SELECT * FROM mood_checkins ORDER BY checkin_id DESC;";
 
             try
@@ -196,7 +187,6 @@ public ManagerLoginResult LogoutManager()
                         {
                             checkIns.Add(new CheckInRecord
                             {
-                                // Formatting the timestamp for a clean dashboard view
                                 SubmissionDate = Convert.ToDateTime(reader["created_at"]).ToString("MMMM dd, yyyy"),
                                 Mood = reader["mood"].ToString(),
                                 WorkplaceFactor = reader["workplace_factor"].ToString(),
@@ -209,19 +199,80 @@ public ManagerLoginResult LogoutManager()
             }
             catch (Exception ex)
             {
-                // If the connection fails, it will return an empty list and trigger the UI's error message
                 Console.WriteLine(ex.Message);
             }
 
             return checkIns;
         }
+
+        // US-10: Get Dashboard Summary Method
+
+        [WebMethod(EnableSession = true)]
+        public DashboardSummary GetDashboardSummary()
+        {
+            DashboardSummary summary = new DashboardSummary
+            {
+                Moods = new List<MoodSummary>(),
+                Factors = new List<FactorSummary>()
+            };
+
+            // Applying the exact same US-08 security check that Wyatt added above
+            if (Session["IsManager"] == null ||
+                !Session["IsManager"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
+            {
+                return summary;
+            }
+
+            try
+            {
+                using (MySqlConnection con = new MySqlConnection(getConString()))
+                {
+                    con.Open();
+
+                    // Query 1: Count the moods
+                    string moodQuery = "SELECT mood, COUNT(*) as count FROM mood_checkins GROUP BY mood;";
+                    using (MySqlCommand cmd = new MySqlCommand(moodQuery, con))
+                    using (MySqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            summary.Moods.Add(new MoodSummary {
+                                Mood = reader["mood"].ToString(),
+                                Count = Convert.ToInt32(reader["count"])
+                            });
+                        }
+                    }
+
+                    // Query 2: Count the workplace factors
+                    string factorQuery = "SELECT workplace_factor, COUNT(*) as count FROM mood_checkins GROUP BY workplace_factor;";
+                    using (MySqlCommand cmd = new MySqlCommand(factorQuery, con))
+                    using (MySqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            summary.Factors.Add(new FactorSummary {
+                                Factor = reader["workplace_factor"].ToString(),
+                                Count = Convert.ToInt32(reader["count"])
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+            return summary;
+        }
+    } // End of ProjectServices class
+
+    public class ManagerLoginResult
+    {
+        public bool Success { get; set; }
+        public string Message { get; set; }
     }
-public class ManagerLoginResult
-{
-    public bool Success { get; set; }
-    public string Message { get; set; }
-}
-    // This class organizes the data before sending it securely to the frontend
+
     public class CheckInRecord
     {
         public string SubmissionDate { get; set; }
@@ -229,5 +280,24 @@ public class ManagerLoginResult
         public string WorkplaceFactor { get; set; }
         public string CauseText { get; set; }
         public string RecommendationText { get; set; }
+    }
+
+    // US-10: Dashboard Summary Classes
+    public class MoodSummary
+    {
+        public string Mood { get; set; }
+        public int Count { get; set; }
+    }
+
+    public class FactorSummary
+    {
+        public string Factor { get; set; }
+        public int Count { get; set; }
+    }
+
+    public class DashboardSummary
+    {
+        public List<MoodSummary> Moods { get; set; }
+        public List<FactorSummary> Factors { get; set; }
     }
 }
