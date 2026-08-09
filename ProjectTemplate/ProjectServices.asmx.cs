@@ -32,23 +32,13 @@ namespace ProjectTemplate
         }
         ////////////////////////////////////////////////////////////////////////
 
-        /////////////////////////////////////////////////////////////////////////
-        //don't forget to include this decoration above each method that you want
-        //to be exposed as a web service!
         [WebMethod(EnableSession = true)]
-        /////////////////////////////////////////////////////////////////////////
         public string TestConnection()
         {
             try
             {
                 string testQuery = "select * from test";
-
-                ////////////////////////////////////////////////////////////////////////
-                ///here's an example of using the getConString method!
-                ////////////////////////////////////////////////////////////////////////
                 MySqlConnection con = new MySqlConnection(getConString());
-                ////////////////////////////////////////////////////////////////////////
-
                 MySqlCommand cmd = new MySqlCommand(testQuery, con);
                 MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
                 DataTable table = new DataTable();
@@ -180,7 +170,7 @@ namespace ProjectTemplate
                 return checkIns;
             }
 
-            // Querying the database and ordering by ID descending so the newest check-ins appear first
+            // Querying the database and ordering by checkin_id descending so the newest check-ins appear first
             string query = "SELECT * FROM mood_checkins ORDER BY checkin_id DESC;";
 
             try
@@ -196,7 +186,6 @@ namespace ProjectTemplate
                         {
                             checkIns.Add(new CheckInRecord
                             {
-                                // Formatting the timestamp for a clean dashboard view
                                 SubmissionDate = Convert.ToDateTime(reader["created_at"]).ToString("MMMM dd, yyyy"),
                                 Mood = reader["mood"].ToString(),
                                 WorkplaceFactor = reader["workplace_factor"].ToString(),
@@ -209,7 +198,6 @@ namespace ProjectTemplate
             }
             catch (Exception ex)
             {
-                // If the connection fails, it will return an empty list and trigger the UI's error message
                 Console.WriteLine(ex.Message);
             }
 
@@ -223,7 +211,7 @@ namespace ProjectTemplate
 
             string query = @"
                 SELECT
-                action_update_id,
+                    action_update_id,
                     title,
                     description,
                     status,
@@ -248,8 +236,7 @@ namespace ProjectTemplate
                                 Title = reader["title"].ToString(),
                                 Description = reader["description"].ToString(),
                                 Status = reader["status"].ToString(),
-                                UpdateDate = Convert.ToDateTime(reader["update_date"])
-                                    .ToString("MMMM dd, yyyy")
+                                UpdateDate = Convert.ToDateTime(reader["update_date"]).ToString("MMMM dd, yyyy")
                             });
                         }
                     }
@@ -257,13 +244,74 @@ namespace ProjectTemplate
             }
             catch (Exception ex)
             {
-                throw new Exception(
-                    "Unable to retrieve management action updates.",
-                    ex
-                );
+                throw new Exception("Unable to retrieve management action updates.", ex);
             }
 
             return updates;
+        }
+
+        // US-10: Get Dashboard Summary Method
+        [WebMethod(EnableSession = true)]
+        public DashboardSummary GetDashboardSummary()
+        {
+            DashboardSummary summary = new DashboardSummary
+            {
+                Moods = new List<MoodSummary>(),
+                Factors = new List<FactorSummary>()
+            };
+
+            // Applying the exact same US-08 security check that Wyatt added above
+            if (Session["IsManager"] == null ||
+                !Session["IsManager"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
+            {
+                return summary;
+            }
+
+            try
+            {
+                using (MySqlConnection con = new MySqlConnection(getConString()))
+                {
+                    con.Open();
+
+                    // Query 1: Count the moods
+                    string moodQuery = "SELECT mood, COUNT(*) as count FROM mood_checkins GROUP BY mood;";
+
+                    using (MySqlCommand cmd = new MySqlCommand(moodQuery, con))
+                    using (MySqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            summary.Moods.Add(new MoodSummary
+                            {
+                                Mood = reader["mood"].ToString(),
+                                Count = Convert.ToInt32(reader["count"])
+                            });
+                        }
+                    }
+
+                    // Query 2: Count the workplace factors
+                    string factorQuery = "SELECT workplace_factor, COUNT(*) as count FROM mood_checkins GROUP BY workplace_factor;";
+
+                    using (MySqlCommand cmd = new MySqlCommand(factorQuery, con))
+                    using (MySqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            summary.Factors.Add(new FactorSummary
+                            {
+                                Factor = reader["workplace_factor"].ToString(),
+                                Count = Convert.ToInt32(reader["count"])
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+            return summary;
         }
     }
 
@@ -282,7 +330,7 @@ namespace ProjectTemplate
         public string UpdateDate { get; set; }
     }
 
-    // Organizes check-in data before sending it to the frontend
+    // This class organizes the data before sending it securely to the frontend
     public class CheckInRecord
     {
         public string SubmissionDate { get; set; }
@@ -290,5 +338,24 @@ namespace ProjectTemplate
         public string WorkplaceFactor { get; set; }
         public string CauseText { get; set; }
         public string RecommendationText { get; set; }
+    }
+
+    // US-10: Dashboard Summary Classes
+    public class MoodSummary
+    {
+        public string Mood { get; set; }
+        public int Count { get; set; }
+    }
+
+    public class FactorSummary
+    {
+        public string Factor { get; set; }
+        public int Count { get; set; }
+    }
+
+    public class DashboardSummary
+    {
+        public List<MoodSummary> Moods { get; set; }
+        public List<FactorSummary> Factors { get; set; }
     }
 }
