@@ -763,6 +763,31 @@
                 gap: 6px;
             }
         }
+        .header-links {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+            .header-links a {
+                color: var(--primary-dark);
+                font-size: 0.9rem;
+                font-weight: 700;
+                text-underline-offset: 3px;
+            }
+
+        @media (max-width: 600px) {
+            .header-top-row {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .header-links {
+                flex-wrap: wrap;
+                gap: 8px 16px;
+            }
+        }
     </style>
     <!--END OF YOUR OWN CSS-->
 
@@ -772,10 +797,16 @@
     <header class="checkin-header">
         <div class="header-top-row">
             <p class="eyebrow">EMPLOYEE WELL-BEING</p>
-            <a class="management-updates-link"
-               href="action-updates.html">
-                View management action updates
-            </a>
+
+            <nav class="header-links" aria-label="Additional pages">
+                <a href="action-updates.html">
+                    Management Updates
+                </a>
+
+                <a href="manager-login.html">
+                    Manager Login
+                </a>
+            </nav>
         </div>
 
             <h1>How are you feeling today?</h1>
