@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -9,47 +9,47 @@ using System.Data;
 
 namespace ProjectTemplate
 {
-	[WebService(Namespace = "http://tempuri.org/")]
-	[WebServiceBinding(ConformsTo = WsiProfiles.BasicProfile1_1)]
-	[System.ComponentModel.ToolboxItem(false)]
-	[System.Web.Script.Services.ScriptService]
+    [WebService(Namespace = "http://tempuri.org/")]
+    [WebServiceBinding(ConformsTo = WsiProfiles.BasicProfile1_1)]
+    [System.ComponentModel.ToolboxItem(false)]
+    [System.Web.Script.Services.ScriptService]
+    public class ProjectServices : System.Web.Services.WebService
+    {
+        ////////////////////////////////////////////////////////////////////////
+        ///replace the values of these variables with your database credentials
+        ////////////////////////////////////////////////////////////////////////
+        private string dbID = "cis440sum26team3";
+        private string dbPass = "cis440sum26team3";
+        private string dbName = "cis440sum26team3";
+        ////////////////////////////////////////////////////////////////////////
 
-	public class ProjectServices : System.Web.Services.WebService
-	{
-		////////////////////////////////////////////////////////////////////////
-		///replace the values of these variables with your database credentials
-		////////////////////////////////////////////////////////////////////////
-		private string dbID = "cis440sum26team3";
-		private string dbPass = "cis440sum26team3";
-		private string dbName = "cis440sum26team3";
-		////////////////////////////////////////////////////////////////////////
-		
-		////////////////////////////////////////////////////////////////////////
-		///call this method anywhere that you need the connection string!
-		////////////////////////////////////////////////////////////////////////
-		private string getConString() {
-			return "SERVER=107.180.1.16; PORT=3306; DATABASE=" + dbName+"; UID=" + dbID + "; PASSWORD=" + dbPass;
-		}
-		////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////
+        ///call this method anywhere that you need the connection string!
+        ////////////////////////////////////////////////////////////////////////
+        private string getConString()
+        {
+            return "SERVER=107.180.1.16; PORT=3306; DATABASE=" + dbName + "; UID=" + dbID + "; PASSWORD=" + dbPass;
+        }
+        ////////////////////////////////////////////////////////////////////////
 
-		[WebMethod(EnableSession = true)]
-		public string TestConnection()
-		{
-			try
-			{
-				string testQuery = "select * from test";
-				MySqlConnection con = new MySqlConnection(getConString());
-				MySqlCommand cmd = new MySqlCommand(testQuery, con);
-				MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
-				DataTable table = new DataTable();
-				adapter.Fill(table);
-				return "Success!";
-			}
-			catch (Exception e)
-			{
-				return "Something went wrong, please check your credentials and db name and try again.  Error: "+e.Message;
-			}
-		}
+        [WebMethod(EnableSession = true)]
+        public string TestConnection()
+        {
+            try
+            {
+                string testQuery = "select * from test";
+                MySqlConnection con = new MySqlConnection(getConString());
+                MySqlCommand cmd = new MySqlCommand(testQuery, con);
+                MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
+                DataTable table = new DataTable();
+                adapter.Fill(table);
+                return "Success!";
+            }
+            catch (Exception e)
+            {
+                return "Something went wrong, please check your credentials and db name and try again.  Error: " + e.Message;
+            }
+        }
 
         [WebMethod(EnableSession = true)]
         public MoodCheckInResult SubmitMoodCheckIn(
@@ -76,10 +76,10 @@ namespace ProjectTemplate
             }
 
             const string query = @"
-        INSERT INTO mood_checkins
-            (mood, workplace_factor, cause_text, recommendation_text)
-        VALUES
-            (@mood, @workplaceFactor, @causeText, @recommendationText);";
+                INSERT INTO mood_checkins
+                    (mood, workplace_factor, cause_text, recommendation_text)
+                VALUES
+                    (@mood, @workplaceFactor, @causeText, @recommendationText);";
 
             try
             {
@@ -87,11 +87,9 @@ namespace ProjectTemplate
                 using (MySqlCommand cmd = new MySqlCommand(query, con))
                 {
                     cmd.Parameters.Add("@mood", MySqlDbType.VarChar, 20).Value = mood;
-                    cmd.Parameters.Add("@workplaceFactor", MySqlDbType.VarChar, 50).Value =
-                        workplaceFactor;
+                    cmd.Parameters.Add("@workplaceFactor", MySqlDbType.VarChar, 50).Value = workplaceFactor;
                     cmd.Parameters.Add("@causeText", MySqlDbType.Text).Value = causeText;
-                    cmd.Parameters.Add("@recommendationText", MySqlDbType.Text).Value =
-                        recommendationText;
+                    cmd.Parameters.Add("@recommendationText", MySqlDbType.Text).Value = recommendationText;
 
                     con.Open();
 
@@ -123,7 +121,7 @@ namespace ProjectTemplate
             }
         }
 
-		[WebMethod(EnableSession = true)]
+        [WebMethod(EnableSession = true)]
         public ManagerLoginResult LoginManager(string username, string password)
         {
             username = (username ?? string.Empty).Trim();
@@ -165,7 +163,7 @@ namespace ProjectTemplate
         public List<CheckInRecord> GetRecentCheckIns()
         {
             List<CheckInRecord> checkIns = new List<CheckInRecord>();
-			
+
             if (Session["IsManager"] == null ||
                 !Session["IsManager"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase))
             {
@@ -181,6 +179,7 @@ namespace ProjectTemplate
                 using (MySqlCommand cmd = new MySqlCommand(query, con))
                 {
                     con.Open();
+
                     using (MySqlDataReader reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())
@@ -205,8 +204,53 @@ namespace ProjectTemplate
             return checkIns;
         }
 
-        // US-10: Get Dashboard Summary Method
+        [WebMethod(EnableSession = true)]
+        public List<ActionUpdateRecord> GetManagementActionUpdates()
+        {
+            List<ActionUpdateRecord> updates = new List<ActionUpdateRecord>();
 
+            string query = @"
+                SELECT
+                    action_update_id,
+                    title,
+                    description,
+                    status,
+                    COALESCE(updated_at, created_at) AS update_date
+                FROM management_action_updates
+                ORDER BY update_date DESC;";
+
+            try
+            {
+                using (MySqlConnection con = new MySqlConnection(getConString()))
+                using (MySqlCommand cmd = new MySqlCommand(query, con))
+                {
+                    con.Open();
+
+                    using (MySqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            updates.Add(new ActionUpdateRecord
+                            {
+                                ActionUpdateId = Convert.ToInt32(reader["action_update_id"]),
+                                Title = reader["title"].ToString(),
+                                Description = reader["description"].ToString(),
+                                Status = reader["status"].ToString(),
+                                UpdateDate = Convert.ToDateTime(reader["update_date"]).ToString("MMMM dd, yyyy")
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Unable to retrieve management action updates.", ex);
+            }
+
+            return updates;
+        }
+
+        // US-10: Get Dashboard Summary Method
         [WebMethod(EnableSession = true)]
         public DashboardSummary GetDashboardSummary()
         {
@@ -231,12 +275,14 @@ namespace ProjectTemplate
 
                     // Query 1: Count the moods
                     string moodQuery = "SELECT mood, COUNT(*) as count FROM mood_checkins GROUP BY mood;";
+
                     using (MySqlCommand cmd = new MySqlCommand(moodQuery, con))
                     using (MySqlDataReader reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())
                         {
-                            summary.Moods.Add(new MoodSummary {
+                            summary.Moods.Add(new MoodSummary
+                            {
                                 Mood = reader["mood"].ToString(),
                                 Count = Convert.ToInt32(reader["count"])
                             });
@@ -245,12 +291,14 @@ namespace ProjectTemplate
 
                     // Query 2: Count the workplace factors
                     string factorQuery = "SELECT workplace_factor, COUNT(*) as count FROM mood_checkins GROUP BY workplace_factor;";
+
                     using (MySqlCommand cmd = new MySqlCommand(factorQuery, con))
                     using (MySqlDataReader reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())
                         {
-                            summary.Factors.Add(new FactorSummary {
+                            summary.Factors.Add(new FactorSummary
+                            {
                                 Factor = reader["workplace_factor"].ToString(),
                                 Count = Convert.ToInt32(reader["count"])
                             });
@@ -265,7 +313,7 @@ namespace ProjectTemplate
 
             return summary;
         }
-    } // End of ProjectServices class
+    }
 
     public class ManagerLoginResult
     {
@@ -273,6 +321,16 @@ namespace ProjectTemplate
         public string Message { get; set; }
     }
 
+    public class ActionUpdateRecord
+    {
+        public int ActionUpdateId { get; set; }
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public string Status { get; set; }
+        public string UpdateDate { get; set; }
+    }
+
+    // This class organizes the data before sending it securely to the frontend
     public class CheckInRecord
     {
         public string SubmissionDate { get; set; }
