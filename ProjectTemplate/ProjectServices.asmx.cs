@@ -251,6 +251,80 @@ public ManagerLoginResult LogoutManager()
                 return false;
             }
         }
+        // US-13: Allow an authorized manager to change
+        // the status of an existing management action update.
+        [WebMethod(EnableSession = true)]
+        public bool UpdateManagementActionStatus(
+            int actionUpdateId,
+            string status)
+        {
+            // Only an authenticated manager can change an action update.
+            if (Session["IsManager"] == null ||
+                !Session["IsManager"].ToString().Equals(
+                    "true",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            // Clean the status value received from the manager dashboard.
+            status = (status ?? string.Empty).Trim();
+
+            // A valid record ID and status are required.
+            if (actionUpdateId <= 0 ||
+                string.IsNullOrWhiteSpace(status))
+            {
+                return false;
+            }
+
+            // Only allow the four statuses defined for US-13.
+            bool validStatus =
+                status == "Concern Received" ||
+                status == "Under Review" ||
+                status == "Improvement Planned" ||
+                status == "Action Completed";
+
+            if (!validStatus)
+            {
+                return false;
+            }
+
+            // Update only the record matching the supplied primary key.
+            string query =
+                @"UPDATE management_action_updates
+          SET status = @status,
+              updated_at = NOW()
+          WHERE action_update_id = @actionUpdateId;";
+
+            try
+            {
+                using (MySqlConnection con =
+                    new MySqlConnection(getConString()))
+                using (MySqlCommand cmd =
+                    new MySqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue(
+                        "@status",
+                        status);
+
+                    cmd.Parameters.AddWithValue(
+                        "@actionUpdateId",
+                        actionUpdateId);
+
+                    con.Open();
+
+                    int rowsAffected =
+                        cmd.ExecuteNonQuery();
+
+                    return rowsAffected == 1;
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
         [WebMethod(EnableSession = true)]
         public List<CheckInRecord> GetRecentCheckIns()
         {
