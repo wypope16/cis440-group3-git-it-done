@@ -214,7 +214,7 @@ namespace ProjectTemplate
             }
 
             return checkIns;
-        } 
+        }
 
         [WebMethod(EnableSession = true)]
         public List<ActionUpdateRecord> GetManagementActionUpdates()
@@ -244,23 +244,27 @@ namespace ProjectTemplate
                         {
                             updates.Add(new ActionUpdateRecord
                             {
-                            ActionUpdateId = Convert.ToInt32(reader["action_update_id"]),
+                                ActionUpdateId = Convert.ToInt32(reader["action_update_id"]),
                                 Title = reader["title"].ToString(),
                                 Description = reader["description"].ToString(),
                                 Status = reader["status"].ToString(),
-                                UpdateDate = Convert.ToDateTime(reader["update_date"]).ToString("MMMM dd, yyyy")
+                                UpdateDate = Convert.ToDateTime(reader["update_date"])
+                                    .ToString("MMMM dd, yyyy")
                             });
                         }
                     }
                 }
             }
             catch (Exception ex)
-{
-    throw new Exception("Unable to retrieve management action updates.", ex);
-}
+            {
+                throw new Exception(
+                    "Unable to retrieve management action updates.",
+                    ex
+                );
+            }
 
-return updates;
-
+            return updates;
+        }
     }
 
     public class ManagerLoginResult
@@ -278,7 +282,7 @@ return updates;
         public string UpdateDate { get; set; }
     }
 
-    // This class organizes the data before sending it securely to the frontend
+    // Organizes check-in data before sending it to the frontend
     public class CheckInRecord
     {
         public string SubmissionDate { get; set; }
