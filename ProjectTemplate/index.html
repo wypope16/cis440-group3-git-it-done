@@ -1,15 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset="utf-8" />
-	<title></title>
+    <meta charset="utf-8" />
+    <title></title>
 
-	<!--DO NOT FORGET THIS SCRIPT TAG SO YOU CAN USE JQUERY!!!!!-->
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <!--DO NOT FORGET THIS SCRIPT TAG SO YOU CAN USE JQUERY!!!!!!-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
-	<!--YOUR OWN JAVASCRIPT CAN GO RIGHT HERE-->
-	<script type="text/javascript">
-
+    <!--YOUR OWN JAVASCRIPT CAN GO RIGHT HERE-->
+    <script type="text/javascript">
         function SubmitMoodCheckIn(event) {
             event.preventDefault();
 
@@ -84,17 +83,17 @@
             });
         }
 
-		function validateFactor() {
-			let selectedFactor = document.querySelector('input[name="factor"]:checked');
+        function validateFactor() {
+            let selectedFactor = document.querySelector('input[name="factor"]:checked');
 
-			if (!selectedFactor) {
-				document.getElementById("factorError").style.display = "block";
-				return false;
-			}
+            if (!selectedFactor) {
+                document.getElementById("factorError").style.display = "block";
+                return false;
+            }
 
-			document.getElementById("factorError").style.display = "none";
-			return true;
-		}
+            document.getElementById("factorError").style.display = "none";
+            return true;
+        }
 
         function validateCause() {
             let causeField = document.getElementById("causeText");
@@ -145,41 +144,43 @@
                 recommendationField.setAttribute("aria-invalid", "false");
             }
         }
-function getSelectedMood() {
-    const selectedMood = document.querySelector(
-        'input[name="mood"]:checked'
-    );
 
-    return selectedMood ? selectedMood.value : "";
-}
+        function getSelectedMood() {
+            const selectedMood = document.querySelector(
+                'input[name="mood"]:checked'
+            );
 
-function validateMood() {
-    const selectedMood = document.querySelector(
-        'input[name="mood"]:checked'
-    );
-
-    const moodError = document.getElementById("moodError");
-    const moodSelector = document.querySelector(".mood-selector");
-
-    if (!selectedMood) {
-        moodError.style.display = "block";
-        moodSelector.setAttribute("aria-invalid", "true");
-
-        const firstMood = document.querySelector(
-            'input[name="mood"]'
-        );
-
-        if (firstMood) {
-            firstMood.focus();
+            return selectedMood ? selectedMood.value : "";
         }
 
-        return false;
-	}
+        function validateMood() {
+            const selectedMood = document.querySelector(
+                'input[name="mood"]:checked'
+            );
 
-    moodError.style.display = "none";
-    moodSelector.setAttribute("aria-invalid", "false");
-    return true;
-		}
+            const moodError = document.getElementById("moodError");
+            const moodSelector = document.querySelector(".mood-selector");
+
+            if (!selectedMood) {
+                moodError.style.display = "block";
+                moodSelector.setAttribute("aria-invalid", "true");
+
+                const firstMood = document.querySelector(
+                    'input[name="mood"]'
+                );
+
+                if (firstMood) {
+                    firstMood.focus();
+                }
+
+                return false;
+            }
+
+            moodError.style.display = "none";
+            moodSelector.setAttribute("aria-invalid", "false");
+            return true;
+        }
+
         function validateCheckIn() {
             const moodIsValid = validateMood();
             const factorIsValid = validateFactor();
@@ -192,26 +193,26 @@ function validateMood() {
                 recommendationIsValid;
         }
 
-document.addEventListener("DOMContentLoaded", function () {
-    const moodInputs = document.querySelectorAll(
-        'input[name="mood"]'
-    );
+        document.addEventListener("DOMContentLoaded", function () {
+            const moodInputs = document.querySelectorAll(
+                'input[name="mood"]'
+            );
 
-    moodInputs.forEach(function (input) {
-        input.addEventListener("change", function () {
-            document.getElementById("moodError").style.display = "none";
+            moodInputs.forEach(function (input) {
+                input.addEventListener("change", function () {
+                    document.getElementById("moodError").style.display = "none";
 
-            document
-                .querySelector(".mood-selector")
-                .setAttribute("aria-invalid", "false");
+                    document
+                        .querySelector(".mood-selector")
+                        .setAttribute("aria-invalid", "false");
+                });
+            });
         });
-    });
-});
-	</script>
-	<!--END OF YOUR OWN JAVASCRIPT-->
+    </script>
+    <!--END OF YOUR OWN JAVASCRIPT-->
 
-	<!--AND YOUR OWN CSS CAN GO HERE AS WELL-->
-	<style>
+    <!--AND YOUR OWN CSS CAN GO HERE AS WELL-->
+    <style>
         /* US-06 Status Message Styles */
         #statusMessage {
             margin-top: 15px;
@@ -220,18 +221,21 @@ document.addEventListener("DOMContentLoaded", function () {
             display: none;
             font-weight: bold;
         }
+
         #statusMessage.success {
             display: block;
             background-color: #d4edda;
             color: #155724;
             border: 1px solid #c3e6cb;
         }
+
         #statusMessage.error {
             display: block;
             background-color: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+
         .mood-selector {
             margin: 16px 0;
             padding: 16px;
@@ -239,11 +243,11 @@ document.addEventListener("DOMContentLoaded", function () {
             border-radius: 6px;
         }
 
-            .mood-selector legend {
-                padding: 0 6px;
-                font-size: 1.15rem;
-                font-weight: bold;
-            }
+        .mood-selector legend {
+            padding: 0 6px;
+            font-size: 1.15rem;
+            font-weight: bold;
+        }
 
         .mood-options {
             display: flex;
@@ -256,53 +260,55 @@ document.addEventListener("DOMContentLoaded", function () {
             cursor: pointer;
         }
 
-            .mood-option input {
-                position: absolute;
-                width: 1px;
-                height: 1px;
-                opacity: 0;
-            }
+        .mood-option input {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+        }
 
-            .mood-option span {
-                display: inline-block;
-                min-width: 100px;
-                padding: 10px 14px;
-                border: 2px solid #666;
-                border-radius: 6px;
-                background-color: #ffffff;
-                text-align: center;
-            }
+        .mood-option span {
+            display: inline-block;
+            min-width: 100px;
+            padding: 10px 14px;
+            border: 2px solid #666;
+            border-radius: 6px;
+            background-color: #ffffff;
+            text-align: center;
+        }
 
-            .mood-option:hover span {
-                border-color: #111;
-                background-color: #f2f2f2;
-            }
+        .mood-option:hover span {
+            border-color: #111;
+            background-color: #f2f2f2;
+        }
 
-            .mood-option input:focus-visible + span {
-                outline: 3px solid #111;
-                outline-offset: 3px;
-            }
+        .mood-option input:focus-visible + span {
+            outline: 3px solid #111;
+            outline-offset: 3px;
+        }
 
-            .mood-option input:checked + span {
-                border-color: #111;
-                background-color: #d9d9d9;
-                font-weight: bold;
-            }
+        .mood-option input:checked + span {
+            border-color: #111;
+            background-color: #d9d9d9;
+            font-weight: bold;
+        }
 
         .validation-message {
             margin-top: 10px;
             color: #b00020;
             font-weight: bold;
         }
-	</style>
-	<!--END OF YOUR OWN CSS-->
-
+    </style>
+    <!--END OF YOUR OWN CSS-->
 </head>
 
 <body>
-
+    <p>
+        <a href="action-updates.html">View management action updates</a>
+    </p>
 
     <hr>
+
     <form id="checkInForm"
           onsubmit="SubmitMoodCheckIn(event);"
           novalidate>
@@ -348,6 +354,7 @@ document.addEventListener("DOMContentLoaded", function () {
         </fieldset>
 
         <hr>
+
         <h3>Select Workplace Factor</h3>
 
         <input type="radio" name="factor" value="Workload"> Workload<br>
@@ -361,6 +368,7 @@ document.addEventListener("DOMContentLoaded", function () {
         <p id="factorError" style="color:red; display:none;">
             Please select a workplace factor.
         </p>
+
         <hr>
 
         <h3>Mood Explanation</h3>
@@ -370,22 +378,23 @@ document.addEventListener("DOMContentLoaded", function () {
         </label>
         <br>
 
-<textarea id="causeText"
-          name="causeText"
-          rows="5"
-          cols="50"
-          required
-          aria-required="true"
-          aria-invalid="false"
-          aria-describedby="causeError"
-          onblur="validateCause();"
-          oninput="clearCauseError();"></textarea>
+        <textarea id="causeText"
+                  name="causeText"
+                  rows="5"
+                  cols="50"
+                  required
+                  aria-required="true"
+                  aria-invalid="false"
+                  aria-describedby="causeError"
+                  onblur="validateCause();"
+                  oninput="clearCauseError();"></textarea>
 
         <p id="causeError"
            role="alert"
            style="color:red; display:none;">
             Please explain what caused your selected mood.
         </p>
+
         <hr>
 
         <h3>Actionable Recommendation</h3>
@@ -395,17 +404,16 @@ document.addEventListener("DOMContentLoaded", function () {
         </label>
         <br>
 
-<textarea id="recommendationText"
-          name="recommendationText"
-          rows="5"
-          cols="50"
-          required
-          aria-required="true"
-          aria-invalid="false"
-          aria-describedby="recommendationError"
-          onblur="validateRecommendation();"
-          oninput="clearRecommendationError();">
-</textarea>
+        <textarea id="recommendationText"
+                  name="recommendationText"
+                  rows="5"
+                  cols="50"
+                  required
+                  aria-required="true"
+                  aria-invalid="false"
+                  aria-describedby="recommendationError"
+                  onblur="validateRecommendation();"
+                  oninput="clearRecommendationError();"></textarea>
 
         <p id="recommendationError"
            role="alert"
@@ -417,7 +425,6 @@ document.addEventListener("DOMContentLoaded", function () {
         <button type="submit" id="submitBtn">
             Submit Check-In
         </button>
-
     </form>
 
     <!-- US-06 Submission Confirmation Message -->
@@ -425,6 +432,5 @@ document.addEventListener("DOMContentLoaded", function () {
          role="alert"
          aria-live="polite"
          tabindex="-1"></div>
-
 </body>
 </html>
