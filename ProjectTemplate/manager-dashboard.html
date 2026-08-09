@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <title>Manager Dashboard - Recent Check-ins</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
         .logout-btn { float: right; padding: 8px 15px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 15px; }
@@ -31,6 +32,60 @@
         .filter-actions button { padding: 6px 12px; cursor: pointer; border-radius: 4px; border: none; }
         .btn-apply { background: #0056b3; color: white; margin-right: 10px; }
         .btn-clear { background: #6c757d; color: white; }
+
+                /* US-12 Trend Chart Styles */
+        .trend-section {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            min-width: 0;
+            padding: 15px;
+            border: 1px solid #0056b3;
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .chart-card h3 {
+            margin-top: 0;
+            color: #0056b3;
+        }
+
+        .chart-area {
+            position: relative;
+            height: 320px;
+        }
+
+        .chart-empty {
+            color: #666;
+            font-style: italic;
+        }
+
+        .trend-status {
+            margin: 0 0 15px;
+            padding: 10px;
+            border-radius: 4px;
+            background: #e6f2ff;
+            color: #0056b3;
+        }
+
+        .trend-status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        @media (max-width: 700px) {
+            .summary-container {
+                flex-direction: column;
+            }
+
+            .trend-section {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -59,8 +114,10 @@
                 <select id="filterMood">
                     <option value="">All Moods</option>
                     <option value="Good">Good</option>
-                    <option value="Neutral">Neutral</option>
+                    <option value="Okay">Okay</option>
                     <option value="Stressed">Stressed</option>
+                    <option value="Frustrated">Frustrated</option>
+                    <option value="Overwhelmed">Overwhelmed</option>
                 </select>
             </div>
             <div class="filter-group">
@@ -68,9 +125,16 @@
                 <select id="filterFactor">
                     <option value="">All Factors</option>
                     <option value="Workload">Workload</option>
-                    <option value="Team Relationships">Team Relationships</option>
-                    <option value="Technology">Technology</option>
                     <option value="Management">Management</option>
+                    <option value="Scheduling">Scheduling</option>
+                    <option value="Technology">Technology</option>
+                    <option value="Communication">Communication</option>
+                    <option value="Team Relationships">
+                        Team Relationships
+                    </option>
+                    <option value="Workplace Environment">
+                        Workplace Environment
+                    </option>
                 </select>
             </div>
             <div class="filter-group">
@@ -87,9 +151,51 @@
             <button class="btn-clear" onclick="clearFilters()">Clear Filters</button>
         </div>
     </div>
+    <!-- US-12: Mood and workplace-factor trends -->
+    <h3>Feedback Trends</h3>
 
+    <p id="trendStatus"
+       class="trend-status"
+       role="status"
+       aria-live="polite">
+        Loading trend data...
+    </p>
+
+    <section class="trend-section" aria-label="Feedback trend charts">
+        <div class="chart-card">
+            <h3>Mood Trends</h3>
+
+            <div class="chart-area">
+                <canvas id="moodTrendChart"
+                        aria-label="Mood trends by date"
+                        role="img"></canvas>
+
+                <p id="moodTrendEmpty"
+                   class="chart-empty"
+                   style="display:none;">
+                    No mood trend data matches the selected filters.
+                </p>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <h3>Workplace-Factor Trends</h3>
+
+            <div class="chart-area">
+                <canvas id="factorTrendChart"
+                        aria-label="Workplace-factor trends by date"
+                        role="img"></canvas>
+
+                <p id="factorTrendEmpty"
+                   class="chart-empty"
+                   style="display:none;">
+                    No workplace-factor trend data matches the selected filters.
+                </p>
+            </div>
+        </div>
+    </section>
     <h3>Recent Anonymous Check-ins</h3>
-    
+
     <!-- US-09: Container for the Check-in Cards -->
     <div id="checkinContainer">
         <p>Loading recent check-ins...</p>
@@ -98,6 +204,8 @@
     <script type="text/javascript">
         // US-11 Data Storage Variable
         let allCheckIns = [];
+        let moodTrendChart = null;
+        let factorTrendChart = null;
 
         function logoutManager() {
             $.ajax({
@@ -125,17 +233,192 @@
 
             dataToRender.forEach(function (record) {
                 const card = `
-                    <div class="checkin-card">
-                        <div class="checkin-header">
-                            Date: ${record.SubmissionDate} | Mood: ${record.Mood} | Factor: ${record.WorkplaceFactor}
+                        <div class="checkin-card">
+                            <div class="checkin-header">
+                                Date: ${record.SubmissionDate} | Mood: ${record.Mood} | Factor: ${record.WorkplaceFactor}
+                            </div>
+                            <div class="checkin-body">
+                                <p><strong>Cause:</strong> ${record.CauseText}</p>
+                                <p><strong>Recommendation:</strong> ${record.RecommendationText}</p>
+                            </div>
                         </div>
-                        <div class="checkin-body">
-                            <p><strong>Cause:</strong> ${record.CauseText}</p>
-                            <p><strong>Recommendation:</strong> ${record.RecommendationText}</p>
-                        </div>
-                    </div>
-                `;
+                    `;
                 container.append(card);
+            });
+        }
+
+        // US-12: Build one line-chart dataset per returned category
+        function createTrendChart(
+            canvasId,
+            emptyMessageId,
+            existingChart,
+            trendPoints) {
+
+            if (existingChart) {
+                existingChart.destroy();
+            }
+
+            const canvas = $("#" + canvasId);
+            const emptyMessage = $("#" + emptyMessageId);
+
+            if (!trendPoints || trendPoints.length === 0) {
+                canvas.hide();
+                emptyMessage.show();
+                return null;
+            }
+
+            canvas.show();
+            emptyMessage.hide();
+
+            const dates = [
+                ...new Set(trendPoints.map(point => point.Date))
+            ].sort();
+
+            const categories = [
+                ...new Set(trendPoints.map(point => point.Category))
+            ].sort();
+
+            const colors = [
+                "#0056b3",
+                "#2f6f65",
+                "#dc3545",
+                "#6f42c1",
+                "#fd7e14",
+                "#198754",
+                "#6c757d"
+            ];
+
+            const countLookup = new Map();
+
+            trendPoints.forEach(point => {
+                const key = point.Date + "|" + point.Category;
+                countLookup.set(key, point.Count);
+            });
+
+            const datasets = categories.map((category, index) => {
+                const color = colors[index % colors.length];
+
+                return {
+                    label: category,
+                    data: dates.map(date => {
+                        const key = date + "|" + category;
+                        return countLookup.has(key)
+                            ? countLookup.get(key)
+                            : 0;
+                    }),
+                    borderColor: color,
+                    backgroundColor: color,
+                    borderWidth: 2,
+                    pointRadius: 4,
+                    tension: 0.2
+                };
+            });
+
+            return new Chart(
+                document.getElementById(canvasId),
+                {
+                    type: "line",
+                    data: {
+                        labels: dates,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: "index",
+                            intersect: false
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0
+                                },
+                                title: {
+                                    display: true,
+                                    text: "Number of Check-ins"
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: "Date"
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: "bottom"
+                            }
+                        }
+                    }
+                }
+            );
+        }
+
+        // US-12: Request trends using the current filter values
+        function loadDashboardTrends() {
+            $("#trendStatus")
+                .removeClass("error")
+                .text("Loading trend data...")
+                .show();
+
+            $.ajax({
+                type: "POST",
+                url: "ProjectServices.asmx/GetDashboardTrends",
+                data: JSON.stringify({
+                    mood: $("#filterMood").val(),
+                    workplaceFactor: $("#filterFactor").val(),
+                    startDate: $("#filterStartDate").val(),
+                    endDate: $("#filterEndDate").val()
+                }),
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+
+                success: function (msg) {
+                    const result = msg.d;
+
+                    if (!result.Authorized) {
+                        sessionStorage.removeItem("isManager");
+                        window.location.href = "manager-login.html";
+                        return;
+                    }
+
+                    if (!result.Success) {
+                        $("#trendStatus")
+                            .addClass("error")
+                            .text(result.Message)
+                            .show();
+
+                        return;
+                    }
+
+                    $("#trendStatus").hide();
+
+                    moodTrendChart = createTrendChart(
+                        "moodTrendChart",
+                        "moodTrendEmpty",
+                        moodTrendChart,
+                        result.MoodTrends
+                    );
+
+                    factorTrendChart = createTrendChart(
+                        "factorTrendChart",
+                        "factorTrendEmpty",
+                        factorTrendChart,
+                        result.FactorTrends
+                    );
+                },
+
+                error: function () {
+                    $("#trendStatus")
+                        .addClass("error")
+                        .text(
+                            "Unable to load dashboard trends. Please try again."
+                        )
+                        .show();
+                }
             });
         }
 
@@ -148,7 +431,7 @@
 
             const filteredData = allCheckIns.filter(record => {
                 let isMatch = true;
-                
+
                 if (mood !== "" && record.Mood !== mood) isMatch = false;
                 if (factor !== "" && record.WorkplaceFactor !== factor) isMatch = false;
 
@@ -166,6 +449,7 @@
                 return isMatch;
             });
             renderCheckIns(filteredData);
+            loadDashboardTrends();
         }
 
         function clearFilters() {
@@ -174,6 +458,7 @@
             $("#filterStartDate").val("");
             $("#filterEndDate").val("");
             renderCheckIns(allCheckIns);
+            loadDashboardTrends();
         }
 
         $(document).ready(function () {
@@ -194,7 +479,7 @@
                     const summary = msg.d;
                     if (summary) {
                         $("#summaryContainer").show();
-                        
+
                         const moodList = $("#moodSummaryList");
                         if (summary.Moods.length === 0) {
                             moodList.append("<li><span class='empty-msg'>No mood data</span></li>");
@@ -224,13 +509,15 @@
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
                 success: function (msg) {
-                    allCheckIns = msg.d; 
+                    allCheckIns = msg.d;
                     renderCheckIns(allCheckIns); // Render for US-11
                 },
                 error: function () {
                     $("#checkinContainer").html("<p class='empty-msg' style='color:red;'>Oops! Error loading check-ins. Please check the database connection.</p>");
                 }
             });
+            // US-12: Load unfiltered trends when the dashboard opens
+            loadDashboardTrends();
         });
     </script>
 </body>

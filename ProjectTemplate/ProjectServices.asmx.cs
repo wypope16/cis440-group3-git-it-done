@@ -6,6 +6,7 @@ using System.Web.Services;
 using MySql.Data;
 using MySql.Data.MySqlClient;
 using System.Data;
+using System.Globalization;
 
 namespace ProjectTemplate
 {
@@ -287,6 +288,7 @@ namespace ProjectTemplate
                                 Count = Convert.ToInt32(reader["count"])
                             });
                         }
+
                     }
 
                     // Query 2: Count the workplace factors
@@ -312,6 +314,227 @@ namespace ProjectTemplate
             }
 
             return summary;
+        }
+        private void AddTrendParameters(
+    MySqlCommand cmd,
+    string mood,
+    string workplaceFactor,
+    DateTime? startDateValue,
+    DateTime? endDateExclusive)
+        {
+            cmd.Parameters.Add("@mood", MySqlDbType.VarChar, 20).Value =
+                mood;
+
+            cmd.Parameters.Add("@workplaceFactor", MySqlDbType.VarChar, 50).Value =
+                workplaceFactor;
+
+            cmd.Parameters.Add("@startDate", MySqlDbType.DateTime).Value =
+                startDateValue.HasValue
+                    ? (object)startDateValue.Value
+                    : DBNull.Value;
+
+            cmd.Parameters.Add("@endDateExclusive", MySqlDbType.DateTime).Value =
+                endDateExclusive.HasValue
+                    ? (object)endDateExclusive.Value
+                    : DBNull.Value;
+        }
+
+        // US-12: Return mood and workplace-factor trends
+        [WebMethod(EnableSession = true)]
+        public DashboardTrendResult GetDashboardTrends(
+            string mood,
+            string workplaceFactor,
+            string startDate,
+            string endDate)
+        {
+            DashboardTrendResult result = new DashboardTrendResult
+            {
+                Success = false,
+                Authorized = false,
+                Message = string.Empty,
+                MoodTrends = new List<TrendPoint>(),
+                FactorTrends = new List<TrendPoint>()
+            };
+
+            if (Session["IsManager"] == null ||
+                !Session["IsManager"].ToString().Equals(
+                    "true",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                result.Message = "Your manager session has expired.";
+                return result;
+            }
+
+            result.Authorized = true;
+
+            mood = (mood ?? string.Empty).Trim();
+            workplaceFactor = (workplaceFactor ?? string.Empty).Trim();
+            startDate = (startDate ?? string.Empty).Trim();
+            endDate = (endDate ?? string.Empty).Trim();
+
+            DateTime parsedDate;
+            DateTime? startDateValue = null;
+            DateTime? endDateExclusive = null;
+
+            if (!string.IsNullOrWhiteSpace(startDate))
+            {
+                if (!DateTime.TryParseExact(
+                    startDate,
+                    "yyyy-MM-dd",
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.None,
+                    out parsedDate))
+                {
+                    result.Message = "The selected start date is invalid.";
+                    return result;
+                }
+
+                startDateValue = parsedDate.Date;
+            }
+
+            if (!string.IsNullOrWhiteSpace(endDate))
+            {
+                if (!DateTime.TryParseExact(
+                    endDate,
+                    "yyyy-MM-dd",
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.None,
+                    out parsedDate))
+                {
+                    result.Message = "The selected end date is invalid.";
+                    return result;
+                }
+
+                // Using the following day makes the selected end date inclusive.
+                endDateExclusive = parsedDate.Date.AddDays(1);
+            }
+
+            if (startDateValue.HasValue &&
+                endDateExclusive.HasValue &&
+                startDateValue.Value >= endDateExclusive.Value)
+            {
+                result.Message =
+                    "The start date cannot be later than the end date.";
+
+                return result;
+            }
+
+            const string moodQuery = @"
+                SELECT
+                    DATE(created_at) AS trend_date,
+                    mood AS category,
+                    COUNT(*) AS count
+                FROM mood_checkins
+                WHERE
+                    (@mood = '' OR mood = @mood)
+                    AND
+                    (@workplaceFactor = '' OR
+                        workplace_factor = @workplaceFactor)
+                    AND
+                    (@startDate IS NULL OR created_at >= @startDate)
+                    AND
+                    (@endDateExclusive IS NULL OR
+                        created_at < @endDateExclusive)
+                GROUP BY DATE(created_at), mood
+                ORDER BY trend_date ASC, category ASC;";
+
+            const string factorQuery = @"
+                SELECT
+                    DATE(created_at) AS trend_date,
+                    workplace_factor AS category,
+                    COUNT(*) AS count
+                FROM mood_checkins
+                WHERE
+                    (@mood = '' OR mood = @mood)
+                    AND
+                    (@workplaceFactor = '' OR
+                        workplace_factor = @workplaceFactor)
+                    AND
+                    (@startDate IS NULL OR created_at >= @startDate)
+                    AND
+                    (@endDateExclusive IS NULL OR
+                        created_at < @endDateExclusive)
+                GROUP BY DATE(created_at), workplace_factor
+                ORDER BY trend_date ASC, category ASC;";
+
+            try
+            {
+                using (MySqlConnection con =
+                    new MySqlConnection(getConString()))
+                {
+                    con.Open();
+
+                    using (MySqlCommand cmd =
+                        new MySqlCommand(moodQuery, con))
+                    {
+                        AddTrendParameters(
+                            cmd,
+                            mood,
+                            workplaceFactor,
+                            startDateValue,
+                            endDateExclusive);
+
+                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                result.MoodTrends.Add(new TrendPoint
+                                {
+                                    Date = Convert.ToDateTime(
+                                        reader["trend_date"])
+                                        .ToString("yyyy-MM-dd"),
+
+                                    Category =
+                                        reader["category"].ToString(),
+
+                                    Count =
+                                        Convert.ToInt32(reader["count"])
+                                });
+                            }
+                        }
+                    }
+
+                    using (MySqlCommand cmd =
+                        new MySqlCommand(factorQuery, con))
+                    {
+                        AddTrendParameters(
+                            cmd,
+                            mood,
+                            workplaceFactor,
+                            startDateValue,
+                            endDateExclusive);
+
+                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                result.FactorTrends.Add(new TrendPoint
+                                {
+                                    Date = Convert.ToDateTime(
+                                        reader["trend_date"])
+                                        .ToString("yyyy-MM-dd"),
+
+                                    Category =
+                                        reader["category"].ToString(),
+
+                                    Count =
+                                        Convert.ToInt32(reader["count"])
+                                });
+                            }
+                        }
+                    }
+                }
+
+                result.Success = true;
+                result.Message = "Trend data loaded successfully.";
+            }
+            catch (Exception)
+            {
+                result.Message =
+                    "Unable to load dashboard trends. Please try again.";
+            }
+
+            return result;
         }
     }
 
@@ -357,5 +580,22 @@ namespace ProjectTemplate
     {
         public List<MoodSummary> Moods { get; set; }
         public List<FactorSummary> Factors { get; set; }
+    }
+
+    // US-12: Dashboard trend response classes
+    public class TrendPoint
+    {
+        public string Date { get; set; }
+        public string Category { get; set; }
+        public int Count { get; set; }
+    }
+
+    public class DashboardTrendResult
+    {
+        public bool Success { get; set; }
+        public bool Authorized { get; set; }
+        public string Message { get; set; }
+        public List<TrendPoint> MoodTrends { get; set; }
+        public List<TrendPoint> FactorTrends { get; set; }
     }
 }
