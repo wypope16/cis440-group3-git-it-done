@@ -255,12 +255,12 @@ namespace ProjectTemplate
                 }
             }
             catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
+{
+    throw new Exception("Unable to retrieve management action updates.", ex);
+}
 
-            return updates;
-        }
+return updates;
+
     }
 
     public class ManagerLoginResult
