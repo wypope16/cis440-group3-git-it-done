@@ -91,11 +91,12 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Database\001_create_mood_checkins.sql" />
+    <Content Include="Database\002_add_checkin_frequency.sql" />
     <Content Include="Global.asax" />
     <Content Include="index.html" />
     <Content Include="ProjectServices.asmx" />
     <Content Include="Web.config" />
-<Content Include="action-updates.html" />
+    <Content Include="action-updates.html" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\WebApiConfig.cs" />
