@@ -297,6 +297,13 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        .chart-description {
+            margin: -5px 0 12px;
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
     </style>
 </head>
 
@@ -420,11 +427,15 @@
 
     <section class="trend-section" aria-label="Feedback trend charts">
         <div class="chart-card">
-            <h3>Mood Trends</h3>
+            <h3>Average Mood Over Time</h3>
+
+            <p class="chart-description">
+                Daily average from Overwhelmed (1) to Good (5).
+            </p>
 
             <div class="chart-area">
                 <canvas id="moodTrendChart"
-                        aria-label="Mood trends by date"
+                        aria-label="Average employee mood by date"
                         role="img"></canvas>
 
                 <p id="moodTrendEmpty"
@@ -436,7 +447,11 @@
         </div>
 
         <div class="chart-card">
-            <h3>Workplace-Factor Trends</h3>
+            <h3>Workplace Factors by Date</h3>
+
+            <p class="chart-description">
+                Stacked bars show check-in volume by workplace factor.
+            </p>
 
             <div class="chart-area">
                 <canvas id="factorTrendChart"
@@ -643,9 +658,8 @@
 
 
         // US-12: Build one line-chart dataset per returned category
-        function createTrendChart(
-            canvasId,
-            emptyMessageId,
+        // US-12: Display one daily average mood line
+        function createMoodTrendChart(
             existingChart,
             trendPoints) {
 
@@ -653,8 +667,137 @@
                 existingChart.destroy();
             }
 
-            const canvas = $("#" + canvasId);
-            const emptyMessage = $("#" + emptyMessageId);
+            const canvas = $("#moodTrendChart");
+            const emptyMessage = $("#moodTrendEmpty");
+
+            if (!trendPoints || trendPoints.length === 0) {
+                canvas.hide();
+                emptyMessage.show();
+                return null;
+            }
+
+            canvas.show();
+            emptyMessage.hide();
+
+            const moodLabels = {
+                1: "Overwhelmed",
+                2: "Frustrated",
+                3: "Stressed",
+                4: "Okay",
+                5: "Good"
+            };
+
+            const dates = trendPoints.map(
+                point => point.Date
+            );
+
+            const scores = trendPoints.map(
+                point => point.AverageScore
+            );
+
+            return new Chart(
+                document.getElementById("moodTrendChart"),
+                {
+                    type: "line",
+
+                    data: {
+                        labels: dates,
+
+                        datasets: [
+                            {
+                                label: "Average Mood",
+                                data: scores,
+                                borderColor: "#0056b3",
+                                backgroundColor: "rgba(0, 86, 179, 0.12)",
+                                borderWidth: 3,
+                                pointBackgroundColor: "#0056b3",
+                                pointBorderColor: "#ffffff",
+                                pointBorderWidth: 2,
+                                pointRadius: 5,
+                                pointHoverRadius: 7,
+                                tension: 0.3,
+                                fill: true
+                            }
+                        ]
+                    },
+
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+
+                        interaction: {
+                            mode: "index",
+                            intersect: false
+                        },
+
+                        scales: {
+                            y: {
+                                min: 1,
+                                max: 5,
+
+                                ticks: {
+                                    stepSize: 1,
+
+                                    callback: function (value) {
+                                        return moodLabels[value] || "";
+                                    }
+                                },
+
+                                title: {
+                                    display: true,
+                                    text: "Average Mood"
+                                }
+                            },
+
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: "Date"
+                                }
+                            }
+                        },
+
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        const score =
+                                            Number(context.parsed.y);
+
+                                        return "Average mood: " +
+                                            score.toFixed(2);
+                                    },
+
+                                    afterLabel: function (context) {
+                                        return "Check-ins: " +
+                                            trendPoints[
+                                                context.dataIndex
+                                            ].CheckInCount;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+        }
+
+
+        // US-12: Display workplace-factor counts as stacked bars
+        function createFactorTrendChart(
+            existingChart,
+            trendPoints) {
+
+            if (existingChart) {
+                existingChart.destroy();
+            }
+
+            const canvas = $("#factorTrendChart");
+            const emptyMessage = $("#factorTrendEmpty");
 
             if (!trendPoints || trendPoints.length === 0) {
                 canvas.hide();
@@ -666,85 +809,110 @@
             emptyMessage.hide();
 
             const dates = [
-                ...new Set(trendPoints.map(point => point.Date))
+                ...new Set(
+                    trendPoints.map(point => point.Date)
+                )
             ].sort();
 
             const categories = [
-                ...new Set(trendPoints.map(point => point.Category))
+                ...new Set(
+                    trendPoints.map(point => point.Category)
+                )
             ].sort();
 
-            const colors = [
-                "#0056b3",
-                "#2f6f65",
-                "#dc3545",
-                "#6f42c1",
-                "#fd7e14",
-                "#198754",
-                "#6c757d"
-            ];
+            const factorColors = {
+                "Workload": "#dc3545",
+                "Management": "#6f42c1",
+                "Scheduling": "#fd7e14",
+                "Technology": "#0056b3",
+                "Communication": "#2f6f65",
+                "Team Relationships": "#198754",
+                "Workplace Environment": "#6c757d"
+            };
 
             const countLookup = new Map();
 
             trendPoints.forEach(point => {
-                const key = point.Date + "|" + point.Category;
+                const key =
+                    point.Date + "|" + point.Category;
+
                 countLookup.set(key, point.Count);
             });
 
-            const datasets = categories.map((category, index) => {
-                const color = colors[index % colors.length];
+            const datasets = categories.map(category => {
+                const color =
+                    factorColors[category] || "#495057";
 
                 return {
                     label: category,
+
                     data: dates.map(date => {
                         const key = date + "|" + category;
+
                         return countLookup.has(key)
                             ? countLookup.get(key)
                             : 0;
                     }),
+
                     borderColor: color,
                     backgroundColor: color,
-                    borderWidth: 2,
-                    pointRadius: 4,
-                    tension: 0.2
+                    borderWidth: 1,
+                    maxBarThickness: 60
                 };
             });
 
             return new Chart(
-                document.getElementById(canvasId),
+                document.getElementById("factorTrendChart"),
                 {
-                    type: "line",
+                    type: "bar",
+
                     data: {
                         labels: dates,
                         datasets: datasets
                     },
+
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+
                         interaction: {
                             mode: "index",
                             intersect: false
                         },
+
                         scales: {
                             y: {
                                 beginAtZero: true,
+                                stacked: true,
+
                                 ticks: {
                                     precision: 0
                                 },
+
                                 title: {
                                     display: true,
                                     text: "Number of Check-ins"
                                 }
                             },
+
                             x: {
+                                stacked: true,
+
                                 title: {
                                     display: true,
                                     text: "Date"
                                 }
                             }
                         },
+
                         plugins: {
                             legend: {
                                 position: "bottom"
+                            },
+
+                            tooltip: {
+                                mode: "index",
+                                intersect: false
                             }
                         }
                     }
@@ -791,16 +959,12 @@
 
                     $("#trendStatus").hide();
 
-                    moodTrendChart = createTrendChart(
-                        "moodTrendChart",
-                        "moodTrendEmpty",
+                    moodTrendChart = createMoodTrendChart(
                         moodTrendChart,
                         result.MoodTrends
                     );
 
-                    factorTrendChart = createTrendChart(
-                        "factorTrendChart",
-                        "factorTrendEmpty",
+                    factorTrendChart = createFactorTrendChart(
                         factorTrendChart,
                         result.FactorTrends
                     );
