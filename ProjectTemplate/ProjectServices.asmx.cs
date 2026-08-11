@@ -505,7 +505,7 @@ namespace ProjectTemplate
                 Success = false,
                 Authorized = false,
                 Message = string.Empty,
-                MoodTrends = new List<TrendPoint>(),
+                MoodTrends = new List<MoodTrendPoint>(),
                 FactorTrends = new List<TrendPoint>()
             };
 
@@ -573,23 +573,49 @@ namespace ProjectTemplate
             }
 
             const string moodQuery = @"
-                SELECT
-                    DATE(created_at) AS trend_date,
-                    mood AS category,
-                    COUNT(*) AS count
-                FROM mood_checkins
-                WHERE
-                    (@mood = '' OR mood = @mood)
-                    AND
-                    (@workplaceFactor = '' OR
-                        workplace_factor = @workplaceFactor)
-                    AND
-                    (@startDate IS NULL OR created_at >= @startDate)
-                    AND
-                    (@endDateExclusive IS NULL OR
-                        created_at < @endDateExclusive)
-                GROUP BY DATE(created_at), mood
-                ORDER BY trend_date ASC, category ASC;";
+    SELECT
+        DATE(created_at) AS trend_date,
+
+        ROUND(
+            AVG(
+                CASE mood
+                    WHEN 'Overwhelmed' THEN 1
+                    WHEN 'Frustrated' THEN 2
+                    WHEN 'Stressed' THEN 3
+                    WHEN 'Okay' THEN 4
+                    WHEN 'Good' THEN 5
+                    ELSE NULL
+                END
+            ),
+            2
+        ) AS average_score,
+
+        COUNT(*) AS checkin_count
+
+    FROM mood_checkins
+
+    WHERE
+        (@mood = '' OR mood = @mood)
+
+        AND
+
+        (@workplaceFactor = '' OR
+            workplace_factor = @workplaceFactor)
+
+        AND
+
+        (@startDate IS NULL OR created_at >= @startDate)
+
+        AND
+
+        (@endDateExclusive IS NULL OR
+            created_at < @endDateExclusive)
+
+    GROUP BY DATE(created_at)
+
+    HAVING average_score IS NOT NULL
+
+    ORDER BY trend_date ASC;";
 
             const string factorQuery = @"
                 SELECT
@@ -631,17 +657,17 @@ namespace ProjectTemplate
                         {
                             while (reader.Read())
                             {
-                                result.MoodTrends.Add(new TrendPoint
+                                result.MoodTrends.Add(new MoodTrendPoint
                                 {
                                     Date = Convert.ToDateTime(
-                                        reader["trend_date"])
-                                        .ToString("yyyy-MM-dd"),
+        reader["trend_date"])
+        .ToString("yyyy-MM-dd"),
 
-                                    Category =
-                                        reader["category"].ToString(),
+                                    AverageScore = Convert.ToDouble(
+        reader["average_score"]),
 
-                                    Count =
-                                        Convert.ToInt32(reader["count"])
+                                    CheckInCount = Convert.ToInt32(
+        reader["checkin_count"])
                                 });
                             }
                         }
@@ -736,6 +762,13 @@ namespace ProjectTemplate
     }
 
     // US-12: Dashboard trend response classes
+
+    public class MoodTrendPoint
+    {
+        public string Date { get; set; }
+        public double AverageScore { get; set; }
+        public int CheckInCount { get; set; }
+    }
     public class TrendPoint
     {
         public string Date { get; set; }
@@ -748,7 +781,7 @@ namespace ProjectTemplate
         public bool Success { get; set; }
         public bool Authorized { get; set; }
         public string Message { get; set; }
-        public List<TrendPoint> MoodTrends { get; set; }
+        public List<MoodTrendPoint> MoodTrends { get; set; }
         public List<TrendPoint> FactorTrends { get; set; }
     }
 }
