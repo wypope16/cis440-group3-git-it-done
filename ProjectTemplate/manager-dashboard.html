@@ -194,6 +194,11 @@
                 padding: 7px 14px;
                 cursor: pointer;
             }
+                .management-action-form button:disabled {
+                    cursor: wait;
+                    opacity: 0.65;
+                }
+
 
         .action-update-card {
             border: 1px solid #ccc;
@@ -397,6 +402,7 @@
             </select>
 
             <button type="button"
+                    id="postActionUpdateButton"
                     onclick="postManagementActionUpdate()">
                 Post Update
             </button>
@@ -673,6 +679,12 @@
                 return;
             }
 
+            const postButton =
+                $("#postActionUpdateButton");
+
+            postButton
+                .prop("disabled", true)
+                .text("Posting...");
 
             $.ajax({
 
@@ -730,6 +742,13 @@
                         "An error occurred while posting the action update.",
                         false
                     );
+                },
+
+                complete: function () {
+
+                    postButton
+                        .prop("disabled", false)
+                        .text("Post Update");
                 }
 
             });
