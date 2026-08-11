@@ -157,8 +157,7 @@
             font-weight: 700;
             white-space: nowrap;
         }
-
-        .status-submitted {
+        .status-concern-received {
             background-color: #edf1f3;
             color: #536067;
         }
@@ -168,24 +167,14 @@
             color: #795d00;
         }
 
-        .status-planned {
+        .status-improvement-planned {
             background-color: #dcecff;
             color: #164f86;
         }
 
-        .status-in-progress {
-            background-color: #e8e1f5;
-            color: #58427d;
-        }
-
-        .status-implemented {
+        .status-action-completed {
             background-color: #d4edda;
             color: #155724;
-        }
-
-        .status-not-pursued {
-            background-color: #f1e1e3;
-            color: #7a3037;
         }
 
         .update-description {
@@ -322,12 +311,10 @@
                     .toLowerCase();
 
                 const statusClasses = {
-                    "submitted": "status-submitted",
+                    "concern received": "status-concern-received",
                     "under review": "status-under-review",
-                    "planned": "status-planned",
-                    "in progress": "status-in-progress",
-                    "implemented": "status-implemented",
-                    "not pursued": "status-not-pursued"
+                    "improvement planned": "status-improvement-planned",
+                    "action completed": "status-action-completed"
                 };
 
                 return statusClasses[normalizedStatus] || "";

@@ -3,37 +3,248 @@
 <head>
     <meta charset="utf-8" />
     <title>Manager Dashboard - Recent Check-ins</title>
+
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
-        .logout-btn { float: right; padding: 8px 15px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 15px; }
-        
-        .checkin-card { border: 1px solid #ccc; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: #f9f9f9; }
-        .checkin-header { font-weight: bold; margin-bottom: 10px; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
-        .checkin-body p { margin: 8px 0; }
-        .empty-msg { font-style: italic; color: #666; font-size: 1.1em; }
-        
-        /* US-10 Summary Styles */
-        .summary-container { display: flex; gap: 20px; margin-bottom: 30px; }
-        .summary-box { flex: 1; border: 1px solid #0056b3; border-radius: 8px; padding: 15px; background: #e6f2ff; }
-        .summary-box h3 { margin-top: 0; color: #0056b3; border-bottom: 1px solid #0056b3; padding-bottom: 5px; }
-        .summary-list { list-style-type: none; padding: 0; margin: 0; }
-        .summary-list li { padding: 5px 0; border-bottom: 1px dashed #ccc; display: flex; justify-content: space-between; }
-        
-        /* US-11 Filter Styles */
-        .filter-section { background: #e6f2ff; border: 1px solid #0056b3; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
-        .filter-section h3 { margin-top: 0; color: #0056b3; }
-        .filter-row { display: flex; gap: 15px; margin-bottom: 10px; flex-wrap: wrap; }
-        .filter-group { display: flex; flex-direction: column; }
-        .filter-group label { font-size: 0.9em; font-weight: bold; margin-bottom: 4px; }
-        .filter-group select, .filter-group input { padding: 5px; border-radius: 4px; border: 1px solid #ccc; }
-        .filter-actions { margin-top: 10px; }
-        .filter-actions button { padding: 6px 12px; cursor: pointer; border-radius: 4px; border: none; }
-        .btn-apply { background: #0056b3; color: white; margin-right: 10px; }
-        .btn-clear { background: #6c757d; color: white; }
 
-                /* US-12 Trend Chart Styles */
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: auto;
+        }
+
+        .logout-btn {
+            float: right;
+            padding: 8px 15px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        .checkin-card {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #f9f9f9;
+        }
+
+        .checkin-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+
+        .checkin-body p {
+            margin: 8px 0;
+        }
+
+        .empty-msg {
+            font-style: italic;
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        /* =========================================================
+           US-10 Summary Styles
+           ========================================================= */
+
+        .summary-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-box {
+            flex: 1;
+            border: 1px solid #0056b3;
+            border-radius: 8px;
+            padding: 15px;
+            background: #e6f2ff;
+        }
+
+            .summary-box h3 {
+                margin-top: 0;
+                color: #0056b3;
+                border-bottom: 1px solid #0056b3;
+                padding-bottom: 5px;
+            }
+
+        .summary-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+            .summary-list li {
+                padding: 5px 0;
+                border-bottom: 1px dashed #ccc;
+                display: flex;
+                justify-content: space-between;
+            }
+
+        /* =========================================================
+           US-11 Filter Styles
+           ========================================================= */
+
+        .filter-section {
+            background: #e6f2ff;
+            border: 1px solid #0056b3;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+            .filter-section h3 {
+                margin-top: 0;
+                color: #0056b3;
+            }
+
+        .filter-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+            .filter-group label {
+                font-size: 0.9em;
+                font-weight: bold;
+                margin-bottom: 4px;
+            }
+
+            .filter-group select,
+            .filter-group input {
+                padding: 5px;
+                border-radius: 4px;
+                border: 1px solid #ccc;
+            }
+
+        .filter-actions {
+            margin-top: 10px;
+        }
+
+            .filter-actions button {
+                padding: 6px 12px;
+                cursor: pointer;
+                border-radius: 4px;
+                border: none;
+            }
+
+        .btn-apply {
+            background: #0056b3;
+            color: white;
+            margin-right: 10px;
+        }
+
+        .btn-clear {
+            background: #6c757d;
+            color: white;
+        }
+
+        /* =========================================================
+           US-13 Management Action Update Styles
+           ========================================================= */
+
+        .management-action-section {
+            background: #eef7ff;
+            border: 1px solid #0056b3;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+            .management-action-section h3 {
+                margin-top: 0;
+                color: #0056b3;
+            }
+
+        .management-action-form {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+            .management-action-form label {
+                font-weight: bold;
+            }
+
+            .management-action-form input,
+            .management-action-form textarea,
+            .management-action-form select {
+                padding: 7px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                font-family: inherit;
+            }
+
+            .management-action-form button {
+                width: fit-content;
+                padding: 7px 14px;
+                cursor: pointer;
+            }
+
+                .management-action-form button:disabled {
+                    cursor: wait;
+                    opacity: 0.65;
+                }
+
+
+        .action-update-card {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #f9f9f9;
+        }
+
+        .action-update-header {
+            font-weight: bold;
+            font-size: 1.05rem;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .action-update-body p {
+            margin: 7px 0;
+        }
+
+        .status-change-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+            .status-change-row select {
+                padding: 6px;
+            }
+
+            .status-change-row button {
+                padding: 6px 12px;
+                cursor: pointer;
+            }
+
+        .action-message {
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        /* US-12 Trend Chart Styles */
         .trend-section {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -49,10 +260,10 @@
             background: #fff;
         }
 
-        .chart-card h3 {
-            margin-top: 0;
-            color: #0056b3;
-        }
+            .chart-card h3 {
+                margin-top: 0;
+                color: #0056b3;
+            }
 
         .chart-area {
             position: relative;
@@ -72,10 +283,10 @@
             color: #0056b3;
         }
 
-        .trend-status.error {
-            background: #f8d7da;
-            color: #721c24;
-        }
+            .trend-status.error {
+                background: #f8d7da;
+                color: #721c24;
+            }
 
         @media (max-width: 700px) {
             .summary-container {
@@ -88,29 +299,54 @@
         }
     </style>
 </head>
+
 <body>
-    <button class="logout-btn" type="button" onclick="logoutManager()">Logout</button>
+
+    <button class="logout-btn"
+            type="button"
+            onclick="logoutManager()">
+        Logout
+    </button>
+
     <h2>Manager Dashboard</h2>
+
     <hr>
 
-    <!-- US-10: Summary Container -->
-    <div class="summary-container" id="summaryContainer" style="display: none;">
+    <!-- =========================================================
+         US-10 Summary Container
+         ========================================================= -->
+
+    <div class="summary-container"
+         id="summaryContainer"
+         style="display: none;">
+
         <div class="summary-box">
             <h3>Moods Summary</h3>
-            <ul class="summary-list" id="moodSummaryList"></ul>
+            <ul class="summary-list"
+                id="moodSummaryList"></ul>
         </div>
+
         <div class="summary-box">
             <h3>Workplace Factors</h3>
-            <ul class="summary-list" id="factorSummaryList"></ul>
+            <ul class="summary-list"
+                id="factorSummaryList"></ul>
         </div>
+
     </div>
 
-    <!-- US-11: Filter Menu -->
+    <!-- =========================================================
+         US-11 Filter Menu
+         ========================================================= -->
+
     <div class="filter-section">
+
         <h3>Filter Feedback</h3>
+
         <div class="filter-row">
+
             <div class="filter-group">
                 <label>Mood</label>
+
                 <select id="filterMood">
                     <option value="">All Moods</option>
                     <option value="Good">Good</option>
@@ -120,8 +356,10 @@
                     <option value="Overwhelmed">Overwhelmed</option>
                 </select>
             </div>
+
             <div class="filter-group">
                 <label>Workplace Factor</label>
+
                 <select id="filterFactor">
                     <option value="">All Factors</option>
                     <option value="Workload">Workload</option>
@@ -137,20 +375,39 @@
                     </option>
                 </select>
             </div>
+
             <div class="filter-group">
                 <label>Start Date</label>
-                <input type="date" id="filterStartDate">
+                <input type="date"
+                       id="filterStartDate">
             </div>
+
             <div class="filter-group">
                 <label>End Date</label>
-                <input type="date" id="filterEndDate">
+                <input type="date"
+                       id="filterEndDate">
             </div>
+
         </div>
+
         <div class="filter-actions">
-            <button class="btn-apply" onclick="applyFilters()">Apply Filters</button>
-            <button class="btn-clear" onclick="clearFilters()">Clear Filters</button>
+
+            <button class="btn-apply"
+                    type="button"
+                    onclick="applyFilters()">
+                Apply Filters
+            </button>
+
+            <button class="btn-clear"
+                    type="button"
+                    onclick="clearFilters()">
+                Clear Filters
+            </button>
+
         </div>
+
     </div>
+
     <!-- US-12: Mood and workplace-factor trends -->
     <h3>Feedback Trends</h3>
 
@@ -194,58 +451,196 @@
             </div>
         </div>
     </section>
+
+    <!-- =========================================================
+         US-13 Management Action Updates
+         ========================================================= -->
+
+    <div class="management-action-section">
+
+        <h3>Post Management Action Update</h3>
+
+        <div class="management-action-form">
+
+            <label for="actionUpdateTitle">
+                Update Title
+            </label>
+
+            <input type="text"
+                   id="actionUpdateTitle"
+                   maxlength="150"
+                   required>
+
+            <label for="actionUpdateDescription">
+                Description
+            </label>
+
+            <textarea id="actionUpdateDescription"
+                      rows="4"
+                      required></textarea>
+
+            <label for="actionUpdateStatus">
+                Status
+            </label>
+
+            <select id="actionUpdateStatus"
+                    required>
+
+                <option value="">
+                    -- Select a status --
+                </option>
+
+                <option value="Concern Received">
+                    Concern Received
+                </option>
+
+                <option value="Under Review">
+                    Under Review
+                </option>
+
+                <option value="Improvement Planned">
+                    Improvement Planned
+                </option>
+
+                <option value="Action Completed">
+                    Action Completed
+                </option>
+
+            </select>
+
+            <button type="button"
+                    id="postActionUpdateButton"
+                    onclick="postManagementActionUpdate()">
+                Post Update
+            </button>
+
+            <p id="actionUpdateMessage"
+               class="action-message"
+               role="status"
+               aria-live="polite"></p>
+
+        </div>
+
+    </div>
+
+    <!-- =========================================================
+         US-13 Posted Management Action Updates
+         ========================================================= -->
+
+    <div class="management-action-section">
+
+        <h3>Posted Management Action Updates</h3>
+
+        <div id="managementUpdatesContainer">
+
+            <p class="empty-msg">
+                Loading management action updates...
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- =========================================================
+         US-09 Recent Anonymous Check-ins
+         ========================================================= -->
+
     <h3>Recent Anonymous Check-ins</h3>
 
-    <!-- US-09: Container for the Check-in Cards -->
     <div id="checkinContainer">
         <p>Loading recent check-ins...</p>
     </div>
 
+
     <script type="text/javascript">
+    // =========================================================
         // US-11 Data Storage Variable
+        // =========================================================
+
         let allCheckIns = [];
         let moodTrendChart = null;
         let factorTrendChart = null;
 
+
+        // =========================================================
+        // Existing Manager Logout
+        // =========================================================
+
         function logoutManager() {
+
             $.ajax({
                 type: "POST",
                 url: "ProjectServices.asmx/LogoutManager",
                 data: "{}",
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
+
                 complete: function () {
+
                     sessionStorage.removeItem("isManager");
-                    window.location.href = "manager-login.html";
+
+                    window.location.href =
+                        "manager-login.html";
                 }
             });
         }
 
+
+        // =========================================================
         // US-11 UI Renderer
+        // =========================================================
+
         function renderCheckIns(dataToRender) {
-            const container = $("#checkinContainer");
+
+            const container =
+                $("#checkinContainer");
+
             container.empty();
 
-            if (dataToRender.length === 0) {
-                container.append("<p class='empty-msg'>No anonymous check-ins match the criteria.</p>");
+            if (!dataToRender ||
+                dataToRender.length === 0) {
+
+                container.append(
+                    "<p class='empty-msg'>" +
+                    "No anonymous check-ins match the criteria." +
+                    "</p>"
+                );
+
                 return;
             }
 
             dataToRender.forEach(function (record) {
+
                 const card = `
                         <div class="checkin-card">
+
                             <div class="checkin-header">
-                                Date: ${record.SubmissionDate} | Mood: ${record.Mood} | Factor: ${record.WorkplaceFactor}
+                                Date: ${record.SubmissionDate}
+                                | Mood: ${record.Mood}
+                                | Factor: ${record.WorkplaceFactor}
                             </div>
+
                             <div class="checkin-body">
-                                <p><strong>Cause:</strong> ${record.CauseText}</p>
-                                <p><strong>Recommendation:</strong> ${record.RecommendationText}</p>
+
+                                <p>
+                                    <strong>Cause:</strong>
+                                    ${record.CauseText}
+                                </p>
+
+                                <p>
+                                    <strong>Recommendation:</strong>
+                                    ${record.RecommendationText}
+                                </p>
+
                             </div>
+
                         </div>
                     `;
+
                 container.append(card);
             });
         }
+
 
         // US-12: Build one line-chart dataset per returned category
         function createTrendChart(
@@ -422,103 +817,762 @@
             });
         }
 
+        // =========================================================
         // US-11 Filter Logic
+        // =========================================================
+
         function applyFilters() {
-            const mood = $("#filterMood").val();
-            const factor = $("#filterFactor").val();
-            const startDate = $("#filterStartDate").val();
-            const endDate = $("#filterEndDate").val();
 
-            const filteredData = allCheckIns.filter(record => {
-                let isMatch = true;
+            const mood =
+                $("#filterMood").val();
 
-                if (mood !== "" && record.Mood !== mood) isMatch = false;
-                if (factor !== "" && record.WorkplaceFactor !== factor) isMatch = false;
+            const factor =
+                $("#filterFactor").val();
 
-                if (startDate || endDate) {
-                    const recordDate = new Date(record.SubmissionDate);
-                    if (startDate) {
-                        const start = new Date(startDate + "T00:00:00");
-                        if (recordDate < start) isMatch = false;
+            const startDate =
+                $("#filterStartDate").val();
+
+            const endDate =
+                $("#filterEndDate").val();
+
+
+            const filteredData =
+                allCheckIns.filter(function (record) {
+
+                    let isMatch = true;
+
+                    if (mood !== "" &&
+                        record.Mood !== mood) {
+
+                        isMatch = false;
                     }
-                    if (endDate) {
-                        const end = new Date(endDate + "T23:59:59");
-                        if (recordDate > end) isMatch = false;
+
+                    if (factor !== "" &&
+                        record.WorkplaceFactor !== factor) {
+
+                        isMatch = false;
                     }
-                }
-                return isMatch;
-            });
+
+                    if (startDate || endDate) {
+
+                        const recordDate =
+                            new Date(record.SubmissionDate);
+
+                        if (startDate) {
+
+                            const start =
+                                new Date(
+                                    startDate +
+                                    "T00:00:00"
+                                );
+
+                            if (recordDate < start) {
+                                isMatch = false;
+                            }
+                        }
+
+                        if (endDate) {
+
+                            const end =
+                                new Date(
+                                    endDate +
+                                    "T23:59:59"
+                                );
+
+                            if (recordDate > end) {
+                                isMatch = false;
+                            }
+                        }
+                    }
+
+                    return isMatch;
+                });
+
             renderCheckIns(filteredData);
             loadDashboardTrends();
         }
 
+
         function clearFilters() {
+
             $("#filterMood").val("");
             $("#filterFactor").val("");
             $("#filterStartDate").val("");
             $("#filterEndDate").val("");
+
             renderCheckIns(allCheckIns);
             loadDashboardTrends();
         }
 
-        $(document).ready(function () {
-            // US-08 Security Redirect
-            if (sessionStorage.getItem("isManager") !== "true") {
-                window.location.href = "manager-login.html";
+
+        // =========================================================
+        // US-13 Management Action Update Functions
+        // =========================================================
+
+        function escapeActionUpdateHtml(value) {
+
+            return $("<div>")
+                .text(
+                    value == null
+                        ? ""
+                        : value
+                )
+                .html();
+        }
+
+
+        function setActionUpdateMessage(
+            message,
+            success
+        ) {
+
+            $("#actionUpdateMessage")
+                .text(message)
+                .css(
+                    "color",
+                    success
+                        ? "green"
+                        : "red"
+                );
+        }
+
+
+        function postManagementActionUpdate() {
+
+            const title =
+                $("#actionUpdateTitle")
+                    .val()
+                    .trim();
+
+            const description =
+                $("#actionUpdateDescription")
+                    .val()
+                    .trim();
+
+            const status =
+                $("#actionUpdateStatus")
+                    .val();
+
+
+            if (!title ||
+                !description ||
+                !status) {
+
+                setActionUpdateMessage(
+                    "Please complete the title, description, and status.",
+                    false
+                );
+
                 return;
             }
 
-            // US-10: Fetch and Render Summary Totals
-            $.ajax({
-                type: "POST",
-                url: "ProjectServices.asmx/GetDashboardSummary",
-                data: "{}",
-                contentType: "application/json; charset=utf-8",
-                dataType: "json",
-                success: function (msg) {
-                    const summary = msg.d;
-                    if (summary) {
-                        $("#summaryContainer").show();
+            const postButton =
+                $("#postActionUpdateButton");
 
-                        const moodList = $("#moodSummaryList");
-                        if (summary.Moods.length === 0) {
-                            moodList.append("<li><span class='empty-msg'>No mood data</span></li>");
+            postButton
+                .prop("disabled", true)
+                .text("Posting...");
+
+            $.ajax({
+
+                type: "POST",
+
+                url:
+                    "ProjectServices.asmx/" +
+                    "PostManagementActionUpdate",
+
+                data: JSON.stringify({
+                    title: title,
+                    description: description,
+                    status: status
+                }),
+
+                contentType:
+                    "application/json; charset=utf-8",
+
+                dataType: "json",
+
+
+                success: function (msg) {
+
+                    if (msg.d === true) {
+
+                        setActionUpdateMessage(
+                            "Management action update posted successfully.",
+                            true
+                        );
+
+                        $("#actionUpdateTitle")
+                            .val("");
+
+                        $("#actionUpdateDescription")
+                            .val("");
+
+                        $("#actionUpdateStatus")
+                            .val("");
+
+                        loadManagementActionUpdates();
+
+                    } else {
+
+                        setActionUpdateMessage(
+                            "The action update could not be posted.",
+                            false
+                        );
+                    }
+                },
+
+
+                error: function () {
+
+                    setActionUpdateMessage(
+                        "An error occurred while posting the action update.",
+                        false
+                    );
+                },
+
+                complete: function () {
+
+                    postButton
+                        .prop("disabled", false)
+                        .text("Post Update");
+                }
+
+            });
+        }
+
+
+        function buildManagementStatusOptions(
+            currentStatus
+        ) {
+
+            const statuses = [
+                "Concern Received",
+                "Under Review",
+                "Improvement Planned",
+                "Action Completed"
+            ];
+
+            let options = "";
+
+            statuses.forEach(function (status) {
+
+                const selected =
+                    status === currentStatus
+                        ? " selected"
+                        : "";
+
+                options +=
+                    "<option value=\"" +
+                    status +
+                    "\"" +
+                    selected +
+                    ">" +
+                    status +
+                    "</option>";
+            });
+
+            return options;
+        }
+
+
+        function loadManagementActionUpdates() {
+
+            const container =
+                $("#managementUpdatesContainer");
+
+            container.html(
+                "<p class='empty-msg'>" +
+                "Loading management action updates..." +
+                "</p>"
+            );
+
+
+            $.ajax({
+
+                type: "POST",
+
+                url:
+                    "ProjectServices.asmx/" +
+                    "GetManagementActionUpdates",
+
+                data: "{}",
+
+                contentType:
+                    "application/json; charset=utf-8",
+
+                dataType: "json",
+
+
+                success: function (msg) {
+
+                    const updates =
+                        msg.d || [];
+
+                    container.empty();
+
+
+                    if (updates.length === 0) {
+
+                        container.html(
+                            "<p class='empty-msg'>" +
+                            "No management action updates " +
+                            "have been posted yet." +
+                            "</p>"
+                        );
+
+                        return;
+                    }
+
+
+                    updates.forEach(
+                        function (update) {
+
+                            const id =
+                                parseInt(
+                                    update.ActionUpdateId,
+                                    10
+                                );
+
+
+                            const card =
+                                "<div class='action-update-card'>" +
+
+                                "<div class='action-update-header'>" +
+
+                                escapeActionUpdateHtml(
+                                    update.Title
+                                ) +
+
+                                "</div>" +
+
+
+                                "<div class='action-update-body'>" +
+
+
+                                "<p>" +
+                                "<strong>Description:</strong> " +
+
+                                escapeActionUpdateHtml(
+                                    update.Description
+                                ) +
+
+                                "</p>" +
+
+
+                                "<p>" +
+                                "<strong>Current Status:</strong> " +
+
+                                "<span id='currentStatus-" +
+                                id +
+                                "'>" +
+
+                                escapeActionUpdateHtml(
+                                    update.Status
+                                ) +
+
+                                "</span>" +
+                                "</p>" +
+
+
+                                "<p>" +
+                                "<strong>Updated:</strong> " +
+
+                                escapeActionUpdateHtml(
+                                    update.UpdateDate
+                                ) +
+
+                                "</p>" +
+
+
+                                "<div class='status-change-row'>" +
+
+
+                                "<label for='statusSelect-" +
+                                id +
+                                "'>" +
+
+                                "<strong>" +
+                                "Change Status:" +
+                                "</strong>" +
+
+                                "</label>" +
+
+
+                                "<select id='statusSelect-" +
+                                id +
+                                "'>" +
+
+                                buildManagementStatusOptions(
+                                    update.Status
+                                ) +
+
+                                "</select>" +
+
+
+                                "<button type='button' " +
+
+                                "onclick='" +
+                                "saveManagementActionStatus(" +
+                                id +
+                                ")'>" +
+
+                                "Save Status" +
+
+                                "</button>" +
+
+
+                                "</div>" +
+
+
+                                "<p id='statusMessage-" +
+                                id +
+                                "' " +
+
+                                "class='action-message' " +
+                                "role='status' " +
+                                "aria-live='polite'>" +
+
+                                "</p>" +
+
+
+                                "</div>" +
+
+                                "</div>";
+
+
+                            container.append(card);
+                        }
+                    );
+                },
+
+
+                error: function () {
+
+                    container.html(
+                        "<p class='empty-msg' " +
+                        "style='color:red;'>" +
+
+                        "Unable to load management " +
+                        "action updates." +
+
+                        "</p>"
+                    );
+                }
+
+            });
+        }
+
+
+        function saveManagementActionStatus(
+            actionUpdateId
+        ) {
+
+            const newStatus =
+                $("#statusSelect-" +
+                    actionUpdateId)
+                    .val();
+
+
+            const messageBox =
+                $("#statusMessage-" +
+                    actionUpdateId);
+
+
+            if (!newStatus) {
+
+                messageBox
+                    .text(
+                        "Please select a status."
+                    )
+                    .css(
+                        "color",
+                        "red"
+                    );
+
+                return;
+            }
+
+
+            $.ajax({
+
+                type: "POST",
+
+                url:
+                    "ProjectServices.asmx/" +
+                    "UpdateManagementActionStatus",
+
+                data: JSON.stringify({
+                    actionUpdateId:
+                        actionUpdateId,
+                    status:
+                        newStatus
+                }),
+
+                contentType:
+                    "application/json; charset=utf-8",
+
+                dataType: "json",
+
+
+                success: function (msg) {
+
+                    if (msg.d === true) {
+
+                        $("#currentStatus-" +
+                            actionUpdateId)
+                            .text(newStatus);
+
+
+                        messageBox
+                            .text(
+                                "Status updated successfully."
+                            )
+                            .css(
+                                "color",
+                                "green"
+                            );
+
+
+                        setTimeout(
+                            function () {
+
+                                loadManagementActionUpdates();
+
+                            },
+                            600
+                        );
+
+                    } else {
+
+                        messageBox
+                            .text(
+                                "The status could not be updated."
+                            )
+                            .css(
+                                "color",
+                                "red"
+                            );
+                    }
+                },
+
+
+                error: function () {
+
+                    messageBox
+                        .text(
+                            "An error occurred while updating the status."
+                        )
+                        .css(
+                            "color",
+                            "red"
+                        );
+                }
+
+            });
+        }
+
+
+        // =========================================================
+        // Page Load
+        // =========================================================
+
+        $(document).ready(function () {
+
+            // US-08 Security Redirect
+
+            if (
+                sessionStorage.getItem(
+                    "isManager"
+                ) !== "true"
+            ) {
+
+                window.location.href =
+                    "manager-login.html";
+
+                return;
+            }
+
+
+            // =====================================================
+            // US-13 Load Saved Management Action Updates
+            // =====================================================
+
+            loadManagementActionUpdates();
+
+
+            // =====================================================
+            // US-10 Fetch and Render Summary Totals
+            // =====================================================
+
+            $.ajax({
+
+                type: "POST",
+
+                url:
+                    "ProjectServices.asmx/" +
+                    "GetDashboardSummary",
+
+                data: "{}",
+
+                contentType:
+                    "application/json; charset=utf-8",
+
+                dataType: "json",
+
+
+                success: function (msg) {
+
+                    const summary =
+                        msg.d;
+
+
+                    if (summary) {
+
+                        $("#summaryContainer")
+                            .show();
+
+
+                        const moodList =
+                            $("#moodSummaryList");
+
+                        moodList.empty();
+
+
+                        if (
+                            !summary.Moods ||
+                            summary.Moods.length === 0
+                        ) {
+
+                            moodList.append(
+                                "<li>" +
+                                "<span class='empty-msg'>" +
+                                "No mood data" +
+                                "</span>" +
+                                "</li>"
+                            );
+
                         } else {
-                            summary.Moods.forEach(m => {
-                                moodList.append(`<li><span>${m.Mood}</span> <strong>${m.Count}</strong></li>`);
-                            });
+
+                            summary.Moods.forEach(
+                                function (m) {
+
+                                    moodList.append(
+                                        "<li>" +
+
+                                        "<span>" +
+                                        m.Mood +
+                                        "</span>" +
+
+                                        "<strong>" +
+                                        m.Count +
+                                        "</strong>" +
+
+                                        "</li>"
+                                    );
+                                }
+                            );
                         }
 
-                        const factorList = $("#factorSummaryList");
-                        if (summary.Factors.length === 0) {
-                            factorList.append("<li><span class='empty-msg'>No factor data</span></li>");
+
+                        const factorList =
+                            $("#factorSummaryList");
+
+                        factorList.empty();
+
+
+                        if (
+                            !summary.Factors ||
+                            summary.Factors.length === 0
+                        ) {
+
+                            factorList.append(
+                                "<li>" +
+                                "<span class='empty-msg'>" +
+                                "No factor data" +
+                                "</span>" +
+                                "</li>"
+                            );
+
                         } else {
-                            summary.Factors.forEach(f => {
-                                factorList.append(`<li><span>${f.Factor}</span> <strong>${f.Count}</strong></li>`);
-                            });
+
+                            summary.Factors.forEach(
+                                function (f) {
+
+                                    factorList.append(
+                                        "<li>" +
+
+                                        "<span>" +
+                                        f.Factor +
+                                        "</span>" +
+
+                                        "<strong>" +
+                                        f.Count +
+                                        "</strong>" +
+
+                                        "</li>"
+                                    );
+                                }
+                            );
                         }
                     }
                 }
+
             });
 
-            // Fetch Check-ins
+
+            // =====================================================
+            // Fetch Recent Check-ins
+            // =====================================================
+
             $.ajax({
+
                 type: "POST",
-                url: "ProjectServices.asmx/GetRecentCheckIns",
+
+                url:
+                    "ProjectServices.asmx/" +
+                    "GetRecentCheckIns",
+
                 data: "{}",
-                contentType: "application/json; charset=utf-8",
+
+                contentType:
+                    "application/json; charset=utf-8",
+
                 dataType: "json",
+
+
                 success: function (msg) {
-                    allCheckIns = msg.d;
-                    renderCheckIns(allCheckIns); // Render for US-11
+
+                    allCheckIns =
+                        msg.d || [];
+
+                    renderCheckIns(
+                        allCheckIns
+                    );
                 },
+
+
                 error: function () {
-                    $("#checkinContainer").html("<p class='empty-msg' style='color:red;'>Oops! Error loading check-ins. Please check the database connection.</p>");
+
+                    $("#checkinContainer")
+                        .html(
+                            "<p class='empty-msg' " +
+                            "style='color:red;'>" +
+
+                            "Oops! Error loading check-ins. " +
+                            "Please check the database connection." +
+
+                            "</p>"
+                        );
                 }
+
             });
+
             // US-12: Load unfiltered trends when the dashboard opens
             loadDashboardTrends();
+
         });
     </script>
+
 </body>
 </html>
