@@ -91,6 +91,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Database\001_create_mood_checkins.sql" />
+    <Content Include="Database\002_add_checkin_frequency.sql" />
     <Content Include="Global.asax" />
     <Content Include="index.html" />
     <Content Include="manager-dashboard.html" />

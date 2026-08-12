@@ -304,6 +304,65 @@
             font-size: 0.9rem;
             line-height: 1.4;
         }
+
+        /* US-07 Frequency Setting Styles */
+        .frequency-section {
+            background: #f9f9f9;
+            border: 1px solid #777;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 25px;
+        }
+
+            .frequency-section h3 {
+                margin-top: 0;
+            }
+
+        .frequency-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+            .frequency-row label {
+                font-weight: bold;
+            }
+
+        #frequencyDays {
+            width: 90px;
+            padding: 7px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        #saveFrequencyButton {
+            padding: 8px 14px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            background: #0056b3;
+            color: white;
+        }
+
+            #saveFrequencyButton:disabled {
+                cursor: not-allowed;
+                opacity: 0.7;
+            }
+
+        .frequency-status {
+            min-height: 22px;
+            margin: 10px 0 0;
+            font-weight: bold;
+        }
+
+            .frequency-status.success {
+                color: #146c2e;
+            }
+
+            .frequency-status.error {
+                color: #b00020;
+            }
     </style>
 </head>
 
@@ -318,6 +377,44 @@
     <h2>Manager Dashboard</h2>
 
     <hr>
+
+    <!-- US-07: Manager-controlled saved frequency -->
+    <section class="frequency-section"
+             id="frequencySettings">
+
+        <h3>Check-In Frequency</h3>
+
+        <p>
+            Set the minimum number of days required
+            between accepted anonymous employee
+            check-ins.
+        </p>
+
+        <div class="frequency-row">
+            <label for="frequencyDays">
+                Days between check-ins:
+            </label>
+
+            <input type="number"
+                   id="frequencyDays"
+                   min="1"
+                   max="365"
+                   step="1"
+                   required
+                   aria-describedby="frequencyStatus" />
+
+            <button type="button"
+                    id="saveFrequencyButton"
+                    onclick="saveCheckInFrequency()">
+                Save Frequency
+            </button>
+        </div>
+
+        <p id="frequencyStatus"
+           class="frequency-status"
+           role="status"
+           aria-live="polite"></p>
+    </section>
 
     <!-- =========================================================
          US-10 Summary Container
@@ -568,7 +665,7 @@
 
 
     <script type="text/javascript">
-    // =========================================================
+        // =========================================================
         // US-11 Data Storage Variable
         // =========================================================
 
@@ -601,6 +698,226 @@
         }
 
 
+        // ============================================================
+        // US-07
+        // Load the currently saved frequency.
+        // ============================================================
+        function loadCheckInFrequency() {
+
+            const input =
+                document.getElementById(
+                    "frequencyDays"
+                );
+
+            const statusBox =
+                document.getElementById(
+                    "frequencyStatus"
+                );
+
+            statusBox.textContent =
+                "Loading saved frequency...";
+
+            statusBox.className =
+                "frequency-status";
+
+            $.ajax({
+                type: "POST",
+
+                url:
+                    "ProjectServices.asmx/"
+                    + "GetCheckInFrequency",
+
+                data: "{}",
+
+                contentType:
+                    "application/json; "
+                    + "charset=utf-8",
+
+                dataType: "json",
+
+                success: function (msg) {
+
+                    const result = msg.d;
+
+                    if (
+                        result
+                        && result.Success
+                    ) {
+                        input.value =
+                            result.FrequencyDays;
+
+                        statusBox.textContent =
+                            "Current setting: "
+                            + result.FrequencyDays
+                            + (
+                                result.FrequencyDays
+                                    === 1
+                                    ? " day between "
+                                    + "check-ins."
+                                    : " days between "
+                                    + "check-ins."
+                            );
+
+                        statusBox.className =
+                            "frequency-status "
+                            + "success";
+                    }
+                    else {
+                        statusBox.textContent =
+                            result
+                                && result.Message
+                                ? result.Message
+                                : "The current "
+                                + "check-in frequency "
+                                + "could not be "
+                                + "loaded.";
+
+                        statusBox.className =
+                            "frequency-status "
+                            + "error";
+                    }
+                },
+
+                error: function () {
+
+                    statusBox.textContent =
+                        "The current check-in "
+                        + "frequency could not "
+                        + "be loaded.";
+
+                    statusBox.className =
+                        "frequency-status error";
+                }
+            });
+        }
+
+        // ============================================================
+        // US-07
+        // Validate and save manager frequency.
+        // ============================================================
+        function saveCheckInFrequency() {
+
+            const input =
+                document.getElementById(
+                    "frequencyDays"
+                );
+
+            const statusBox =
+                document.getElementById(
+                    "frequencyStatus"
+                );
+
+            const saveButton =
+                document.getElementById(
+                    "saveFrequencyButton"
+                );
+
+            const frequencyDays =
+                Number(input.value);
+
+            statusBox.textContent = "";
+
+            statusBox.className =
+                "frequency-status";
+
+            if (
+                !Number.isInteger(
+                    frequencyDays
+                )
+                || frequencyDays < 1
+                || frequencyDays > 365
+            ) {
+                statusBox.textContent =
+                    "Enter a whole number "
+                    + "between 1 and "
+                    + "365 days.";
+
+                statusBox.className =
+                    "frequency-status error";
+
+                input.focus();
+
+                return;
+            }
+
+            saveButton.disabled =
+                true;
+
+            saveButton.textContent =
+                "Saving...";
+
+            const parameters =
+                JSON.stringify({
+                    frequencyDays:
+                        frequencyDays
+                });
+
+            $.ajax({
+                type: "POST",
+
+                url:
+                    "ProjectServices.asmx/"
+                    + "SaveCheckInFrequency",
+
+                data: parameters,
+
+                contentType:
+                    "application/json; "
+                    + "charset=utf-8",
+
+                dataType: "json",
+
+                success: function (msg) {
+
+                    const result = msg.d;
+
+                    statusBox.textContent =
+                        result
+                            && result.Message
+                            ? result.Message
+                            : "The frequency "
+                            + "setting could "
+                            + "not be saved.";
+
+                    statusBox.className =
+                        result
+                            && result.Success
+                            ? "frequency-status "
+                            + "success"
+                            : "frequency-status "
+                            + "error";
+
+                    if (
+                        result
+                        && result.Success
+                    ) {
+                        input.value =
+                            result.FrequencyDays;
+                    }
+                },
+
+                error: function () {
+
+                    statusBox.textContent =
+                        "The frequency "
+                        + "setting could "
+                        + "not be saved.";
+
+                    statusBox.className =
+                        "frequency-status error";
+                },
+
+                complete: function () {
+
+                    saveButton.disabled =
+                        false;
+
+                    saveButton.textContent =
+                        "Save Frequency";
+                }
+            });
+        }
+
         // =========================================================
         // US-11 UI Renderer
         // =========================================================
@@ -627,30 +944,30 @@
             dataToRender.forEach(function (record) {
 
                 const card = `
-                        <div class="checkin-card">
+                            <div class="checkin-card">
 
-                            <div class="checkin-header">
-                                Date: ${record.SubmissionDate}
-                                | Mood: ${record.Mood}
-                                | Factor: ${record.WorkplaceFactor}
+                                <div class="checkin-header">
+                                    Date: ${record.SubmissionDate}
+                                    | Mood: ${record.Mood}
+                                    | Factor: ${record.WorkplaceFactor}
+                                </div>
+
+                                <div class="checkin-body">
+
+                                    <p>
+                                        <strong>Cause:</strong>
+                                        ${record.CauseText}
+                                    </p>
+
+                                    <p>
+                                        <strong>Recommendation:</strong>
+                                        ${record.RecommendationText}
+                                    </p>
+
+                                </div>
+
                             </div>
-
-                            <div class="checkin-body">
-
-                                <p>
-                                    <strong>Cause:</strong>
-                                    ${record.CauseText}
-                                </p>
-
-                                <p>
-                                    <strong>Recommendation:</strong>
-                                    ${record.RecommendationText}
-                                </p>
-
-                            </div>
-
-                        </div>
-                    `;
+                        `;
 
                 container.append(card);
             });
@@ -1557,6 +1874,9 @@
                 return;
             }
 
+            // US-07
+            // Load saved frequency.
+            loadCheckInFrequency();
 
             // =====================================================
             // US-13 Load Saved Management Action Updates
