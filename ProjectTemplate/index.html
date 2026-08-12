@@ -64,6 +64,11 @@
                         document.getElementById("checkInForm").reset();
                         document.getElementById("moodResponse").hidden = true;
 
+                        document.getElementById("factorStep").hidden = true;
+                        document.getElementById("detailsStep").hidden = true;
+
+                        updateProgress(1);
+
                         document.getElementById("factorHeading").textContent =
                             "What affected your day most?";
 
@@ -199,6 +204,22 @@
                 causeIsValid &&
                 recommendationIsValid;
         }
+        function updateProgress(step) {
+            const progressLabels = [
+                "Step 1 of 3: Mood",
+                "Step 2 of 3: Workplace factor",
+                "Step 3 of 3: Details and recommendation"
+            ];
+
+            const safeStep = Math.min(Math.max(step, 1), 3);
+            const progressText = document.getElementById("progressText");
+            const progressBar = document.getElementById("progressBar");
+            const progressFill = document.getElementById("progressFill");
+
+            progressText.textContent = progressLabels[safeStep - 1];
+            progressBar.setAttribute("aria-valuenow", safeStep);
+            progressFill.style.width = ((safeStep / 3) * 100) + "%";
+        }
         function scrollToSection(elementId) {
             const target = document.getElementById(elementId);
 
@@ -217,6 +238,25 @@
         }
 
         document.addEventListener("DOMContentLoaded", function () {
+            const factorStep = document.getElementById("factorStep");
+            const detailsStep = document.getElementById("detailsStep");
+
+            const selectedMood = document.querySelector(
+                'input[name="mood"]:checked'
+            );
+
+            const selectedFactor = document.querySelector(
+                'input[name="factor"]:checked'
+            );
+
+            factorStep.hidden = !selectedMood;
+            detailsStep.hidden = !selectedFactor;
+
+            updateProgress(
+                selectedFactor ? 3 :
+                    selectedMood ? 2 :
+                        1
+            );
             const moodInputs = document.querySelectorAll(
                 'input[name="mood"]'
             );
@@ -285,6 +325,14 @@
 
                     document.getElementById("moodResponse").hidden = false;
 
+                    factorStep.hidden = false;
+
+                    /*
+                    Keep Step 3 active if the employee is editing an earlier
+                    answer after already entering the remaining information.
+                    */
+                    updateProgress(detailsStep.hidden ? 2 : 3);
+
                     window.requestAnimationFrame(function () {
                         scrollToSection("factorHeading");
                     });
@@ -297,6 +345,9 @@
             factorInputs.forEach(function (input) {
                 input.addEventListener("change", function () {
                     document.getElementById("factorError").style.display = "none";
+
+                    detailsStep.hidden = false;
+                    updateProgress(3);
 
                     window.requestAnimationFrame(function () {
                         scrollToSection("causeHeading");
@@ -788,6 +839,45 @@
                 gap: 8px 16px;
             }
         }
+        /* US-15: Progressive check-in indicator */
+        .checkin-progress {
+            margin-bottom: 28px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            color: var(--heading);
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 10px;
+            overflow: hidden;
+            border-radius: 999px;
+            background-color: var(--soft-green);
+        }
+
+        .progress-fill {
+            width: 33.333%;
+            height: 100%;
+            border-radius: inherit;
+            background-color: var(--primary);
+            transition: width 200ms ease;
+        }
+
+        .checkin-step[hidden] {
+            display: none;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .progress-fill {
+                transition: none;
+            }
+        }
     </style>
     <!--END OF YOUR OWN CSS-->
 
@@ -809,16 +899,16 @@
             </nav>
         </div>
 
-            <h1>How are you feeling today?</h1>
+        <h1>How are you feeling today?</h1>
 
-            <p class="checkin-intro">
-                Take a moment to share how work is feeling. This check-in should take less than a minute.
-            </p>
+        <p class="checkin-intro">
+            Take a moment to share how work is feeling. This check-in should take less than a minute.
+        </p>
 
-            <p class="anonymous-note">
-                <strong>Your response is anonymous.</strong>
-                This form does not ask for your name or employee information.
-            </p>
+        <p class="anonymous-note">
+            <strong>Your response is anonymous.</strong>
+            This form does not ask for your name or employee information.
+        </p>
     </header>
 
 
@@ -826,135 +916,167 @@
     <form id="checkInForm"
           onsubmit="SubmitMoodCheckIn(event);"
           novalidate>
-        <!-- US-02: Current mood selection -->
-        <fieldset class="mood-selector"
-                  aria-describedby="moodHelp moodError">
+        <div class="checkin-progress" aria-label="Check-in progress">
+            <div class="progress-header">
+                <span id="progressText">Step 1 of 3: Mood</span>
+            </div>
 
-            <legend>How is work feeling today?</legend>
+            <div id="progressBar"
+                 class="progress-track"
+                 role="progressbar"
+                 aria-labelledby="progressText"
+                 aria-valuemin="1"
+                 aria-valuemax="3"
+                 aria-valuenow="1">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+        </div>
 
-            <p id="moodHelp">
-                Choose the option that best matches how you feel right now.
+        <section id="moodStep"
+                 class="checkin-step"
+                 aria-label="Mood selection">
+            <!-- US-02: Current mood selection -->
+            <fieldset class="mood-selector"
+                      aria-describedby="moodHelp moodError">
+
+                <legend>How is work feeling today?</legend>
+
+                <p id="moodHelp">
+                    Choose the option that best matches how you feel right now.
+                </p>
+
+                <div class="mood-options">
+                    <label class="mood-option">
+                        <input type="radio"
+                               id="moodGood"
+                               name="mood"
+                               value="Good" />
+                        <span>Good</span>
+                    </label>
+
+                    <label class="mood-option">
+                        <input type="radio"
+                               id="moodOkay"
+                               name="mood"
+                               value="Okay" />
+                        <span>Okay</span>
+                    </label>
+
+                    <label class="mood-option">
+                        <input type="radio"
+                               id="moodStressed"
+                               name="mood"
+                               value="Stressed" />
+                        <span>Stressed</span>
+                    </label>
+
+                    <label class="mood-option">
+                        <input type="radio"
+                               id="moodFrustrated"
+                               name="mood"
+                               value="Frustrated" />
+                        <span>Frustrated</span>
+                    </label>
+
+                    <label class="mood-option">
+                        <input type="radio"
+                               id="moodOverwhelmed"
+                               name="mood"
+                               value="Overwhelmed" />
+                        <span>Overwhelmed</span>
+                    </label>
+                </div>
+
+                <p id="moodError"
+                   class="validation-message"
+                   role="alert"
+                   style="display:none;">
+                    Please select how you are feeling.
+                </p>
+            </fieldset>
+            <div id="moodResponse"
+                 class="mood-response"
+                 aria-live="polite"
+                 hidden>
+
+                <p id="moodResponseTitle" class="mood-response-title"></p>
+                <p id="moodResponseText" class="mood-response-text"></p>
+            </div>
+        </section>
+
+        <section id="factorStep"
+                 class="checkin-step"
+                 aria-labelledby="factorHeading"
+                 hidden>
+            <hr>
+
+            <h3 id="factorHeading">What affected your day most?</h3>
+
+            <p class="section-description">
+                Choose the workplace factor that had the biggest impact.
             </p>
 
-            <div class="mood-options">
-                <label class="mood-option">
-                    <input type="radio"
-                           id="moodGood"
-                           name="mood"
-                           value="Good" />
-                    <span>Good</span>
+            <div class="factor-options"
+                 role="radiogroup"
+                 aria-labelledby="factorHeading"
+                 aria-describedby="factorError">
+
+                <label class="factor-option">
+                    <input type="radio" name="factor" value="Workload">
+                    <span>Workload</span>
                 </label>
 
-                <label class="mood-option">
-                    <input type="radio"
-                           id="moodOkay"
-                           name="mood"
-                           value="Okay" />
-                    <span>Okay</span>
+                <label class="factor-option">
+                    <input type="radio" name="factor" value="Management">
+                    <span>Management</span>
                 </label>
 
-                <label class="mood-option">
-                    <input type="radio"
-                           id="moodStressed"
-                           name="mood"
-                           value="Stressed" />
-                    <span>Stressed</span>
+                <label class="factor-option">
+                    <input type="radio" name="factor" value="Scheduling">
+                    <span>Scheduling</span>
                 </label>
 
-                <label class="mood-option">
-                    <input type="radio"
-                           id="moodFrustrated"
-                           name="mood"
-                           value="Frustrated" />
-                    <span>Frustrated</span>
+                <label class="factor-option">
+                    <input type="radio" name="factor" value="Technology">
+                    <span>Technology</span>
                 </label>
 
-                <label class="mood-option">
-                    <input type="radio"
-                           id="moodOverwhelmed"
-                           name="mood"
-                           value="Overwhelmed" />
-                    <span>Overwhelmed</span>
+                <label class="factor-option">
+                    <input type="radio" name="factor" value="Communication">
+                    <span>Communication</span>
+                </label>
+
+                <label class="factor-option">
+                    <input type="radio" name="factor" value="Team Relationships">
+                    <span>Team Relationships</span>
+                </label>
+
+                <label class="factor-option">
+                    <input type="radio" name="factor" value="Workplace Environment">
+                    <span>Workplace Environment</span>
                 </label>
             </div>
 
-            <p id="moodError"
+            <p id="factorError"
                class="validation-message"
                role="alert"
                style="display:none;">
-                Please select how you are feeling.
+                Please select a workplace factor.
             </p>
-        </fieldset>
-        <div id="moodResponse"
-             class="mood-response"
-             aria-live="polite"
-             hidden>
+        </section>
 
-            <p id="moodResponseTitle" class="mood-response-title"></p>
-            <p id="moodResponseText" class="mood-response-text"></p>
-        </div>
-        <hr>
-        <h3 id="factorHeading">What affected your day most?</h3>
+        <section id="detailsStep"
+                 class="checkin-step"
+                 aria-labelledby="causeHeading"
+                 hidden>
+            <hr>
 
-        <p class="section-description">
-            Choose the workplace factor that had the biggest impact.
-        </p>
+            <h3 id="causeHeading">Tell us a little more</h3>
 
-        <div class="factor-options"
-             role="radiogroup"
-             aria-labelledby="factorHeading"
-             aria-describedby="factorError">
-
-            <label class="factor-option">
-                <input type="radio" name="factor" value="Workload">
-                <span>Workload</span>
+            <label for="causeText">
+                What caused your selected mood?
             </label>
-
-            <label class="factor-option">
-                <input type="radio" name="factor" value="Management">
-                <span>Management</span>
-            </label>
-
-            <label class="factor-option">
-                <input type="radio" name="factor" value="Scheduling">
-                <span>Scheduling</span>
-            </label>
-
-            <label class="factor-option">
-                <input type="radio" name="factor" value="Technology">
-                <span>Technology</span>
-            </label>
-
-            <label class="factor-option">
-                <input type="radio" name="factor" value="Communication">
-                <span>Communication</span>
-            </label>
-
-            <label class="factor-option">
-                <input type="radio" name="factor" value="Team Relationships">
-                <span>Team Relationships</span>
-            </label>
-
-            <label class="factor-option">
-                <input type="radio" name="factor" value="Workplace Environment">
-                <span>Workplace Environment</span>
-            </label>
-        </div>
-
-        <p id="factorError"
-           class="validation-message"
-           role="alert"
-           style="display:none;">
-            Please select a workplace factor.
-        </p>
-        <hr>
-
-        <h3 id="causeHeading">Tell us a little more</h3>
-
-        <label for="causeText">
-            What caused your selected mood?
-        </label>
-        <br>
+            <br>
 
 <textarea id="causeText"
           name="causeText"
@@ -967,20 +1089,20 @@
           onblur="validateCause();"
           oninput="clearCauseError();"></textarea>
 
-        <p id="causeError"
-           class="validation-message"
-           role="alert"
-           style="display:none;">
-            Please explain what caused your selected mood.
-        </p>
-        <hr>
+            <p id="causeError"
+               class="validation-message"
+               role="alert"
+               style="display:none;">
+                Please explain what caused your selected mood.
+            </p>
+            <hr>
 
-        <h3>Actionable Recommendation</h3>
+            <h3>Actionable Recommendation</h3>
 
-        <label for="recommendationText">
-            What should the company improve or continue doing?
-        </label>
-        <br>
+            <label for="recommendationText">
+                What should the company improve or continue doing?
+            </label>
+            <br>
 
 <textarea id="recommendationText"
           name="recommendationText"
@@ -994,19 +1116,21 @@
           oninput="clearRecommendationError();">
 </textarea>
 
-        <p id="recommendationError"
-           class="validation-message"
-           role="alert"
-           style="display:none;">
-            Please provide a recommendation.
-        </p>
-        <br>
+            <p id="recommendationError"
+               class="validation-message"
+               role="alert"
+               style="display:none;">
+                Please provide a recommendation.
+            </p>
+            <br>
 
-        <button type="submit" id="submitBtn">
-            Submit Check-In
-        </button>
+            <button type="submit" id="submitBtn">
+                Submit Check-In
+            </button>
+        </section>
 
     </form>
+
 
     <!-- US-06 Submission Confirmation Message -->
     <div id="statusMessage"
