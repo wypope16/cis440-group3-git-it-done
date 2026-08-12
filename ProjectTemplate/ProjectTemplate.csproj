@@ -94,6 +94,8 @@
     <Content Include="Database\002_add_checkin_frequency.sql" />
     <Content Include="Global.asax" />
     <Content Include="index.html" />
+    <Content Include="manager-dashboard.html" />
+    <Content Include="manager-login.html" />
     <Content Include="ProjectServices.asmx" />
     <Content Include="Web.config" />
     <Content Include="action-updates.html" />
